@@ -103,7 +103,7 @@ For example, your `myapp/hooks.py` could look like this:
 ```python
 doc_events = {
 	"Sales Invoice": {
-		"before_einvoice_generation": "myapp.einvoice.after_einvoice_generation",
+		"before_einvoice_generation": "myapp.einvoice.before_einvoice_generation",
 		"after_einvoice_generation": "myapp.einvoice.after_einvoice_generation",
 	}
 }
