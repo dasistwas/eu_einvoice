@@ -112,11 +112,19 @@ doc_events = {
 And your `myapp/einvoice.py` like this:
 
 ```python
-def before_einvoice_generation(doc):
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from drafthorse.models.document import Document
+    from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
+
+
+def before_einvoice_generation(doc: "SalesInvoice", event: str):
     """Modify the Sales Invoice object before generating the eInvoice."""
     doc.customer_name = "Special Customer Name, only for eInvoices"
 
-def after_einvoice_generation(doc, einvoice):
+
+def after_einvoice_generation(doc: "SalesInvoice", event: str, einvoice: "Document"):
     """Modify the generated eInvoice after it was created."""
     einvoice.trade.agreement.buyer.name = "Special Customer Name, only for eInvoices"
 ```
