@@ -35,6 +35,8 @@ def download_xrechnung(invoice_id: str):
 
 
 def get_xml(invoice, company, seller_address=None, customer_address=None):
+	invoice.run_method("before_einvoice_generation")
+
 	doc = Document()
 	doc.context.guideline_parameter.id = "urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:extended"
 	doc.header.id = invoice.name
@@ -246,6 +248,8 @@ def get_xml(invoice, company, seller_address=None, customer_address=None):
 	doc.trade.settlement.monetary_summation.grand_total = invoice.grand_total
 	doc.trade.settlement.monetary_summation.prepaid_total = invoice.total_advance
 	doc.trade.settlement.monetary_summation.due_amount = invoice.outstanding_amount
+
+	invoice.run_method("after_einvoice_generation", doc)
 
 	return doc.serialize(schema="FACTUR-X_EXTENDED")
 

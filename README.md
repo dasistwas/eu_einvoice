@@ -86,6 +86,41 @@ To import a new eInvoice, create a new **E Invoice Import** and upload the XML o
 
 Taxes are mapped to "Actual" charges in the **Purchase Invoice**, so that ERPNext does not try to recalculate them.
 
+## Add your custom logic
+
+This app provides hooks to add custom logic to the eInvoice creation process:
+
+- `before_einvoice_generation`
+
+    Called right before the eInvoice is generated. The hook function receives the **Sales Invoice** as an argument and can modify it.
+
+- `after_einvoice_generation`
+
+    Called right after the eInvoice is generated. The hook function receives the **Sales Invoice** and the generated eInvoice as arguments.
+
+For example, your `myapp/hooks.py` could look like this:
+
+```python
+doc_events = {
+	"Sales Invoice": {
+		"before_einvoice_generation": "myapp.einvoice.after_einvoice_generation",
+		"after_einvoice_generation": "myapp.einvoice.after_einvoice_generation",
+	}
+}
+```
+
+And your `myapp/einvoice.py` like this:
+
+```python
+def before_einvoice_generation(doc):
+    """Modify the Sales Invoice object before generating the eInvoice."""
+    doc.customer_name = "Special Customer Name, only for eInvoices"
+
+def after_einvoice_generation(doc, einvoice):
+    """Modify the generated eInvoice after it was created."""
+    einvoice.trade.agreement.buyer.name = "Special Customer Name, only for eInvoices"
+```
+
 ## Contributing
 
 This app uses `pre-commit` for code formatting and linting. Please [install pre-commit](https://pre-commit.com/#installation) and enable it for this repository:
