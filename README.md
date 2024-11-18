@@ -52,7 +52,7 @@ To create a new eInvoice, open a **Sales Invoice** and click on "..." > "Downloa
 When you open the print preview of the **Sales Invoice** and click on "PDF", the generated PDF file will have the e-invoice XML embedded. 
 
 > [!TIP]
-> You can test both XML and PDF+XML files by re-importing them, using the "Import eInvoice" DocType.
+> You can test both XML and PDF+XML files by re-importing them, using the **E Invoice Import** DocType.
 
 For german government customers, the "Leitwegs-ID" should be entered into the field _Customer's Purchase Order_ of the **Sales Invoice**. This way it will show up in the XML's `BuyerReference` element.
 
