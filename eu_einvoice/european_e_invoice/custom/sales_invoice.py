@@ -24,6 +24,12 @@ vat_exemption_reason_codes = CommonCodeRetriever(["urn:xoev-de:kosit:codeliste:v
 
 @frappe.whitelist()
 def download_xrechnung(invoice_id: str):
+	frappe.local.response.filename = f"{invoice_id}.xml"
+	frappe.local.response.filecontent = get_einvoice(invoice_id)
+	frappe.local.response.type = "download"
+
+
+def get_einvoice(invoice_id: str) -> bytes:
 	invoice = frappe.get_doc("Sales Invoice", invoice_id)
 	invoice.check_permission("read")
 
@@ -37,9 +43,7 @@ def download_xrechnung(invoice_id: str):
 
 	company = frappe.get_doc("Company", invoice.company)
 
-	frappe.local.response.filename = f"{invoice_id}.xml"
-	frappe.local.response.filecontent = get_xml(invoice, company, seller_address, customer_address)
-	frappe.local.response.type = "download"
+	return get_xml(invoice, company, seller_address, customer_address)
 
 
 def get_xml(invoice, company, seller_address=None, customer_address=None):
