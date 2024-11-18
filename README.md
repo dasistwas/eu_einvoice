@@ -47,7 +47,12 @@ The retrieval of codes goes from the most specific to the most general. E.g. for
 
 ### Sales Invoice
 
-To create a new eInvoice, open a **Sales Invoice** and click on "..." > "Download eInvoice".
+To create a new eInvoice, open a **Sales Invoice** and click on "..." > "Download eInvoice". This will generate an XML file that you can send to your customer.
+
+When you open the print preview of the **Sales Invoice** and click on "PDF", the generated PDF file will have the e-invoice XML embedded. 
+
+> [!TIP]
+> You can test both XML and PDF+XML files by re-importing them, using the "Import eInvoice" DocType.
 
 For german government customers, the "Leitwegs-ID" should be entered into the field _Customer's Purchase Order_ of the **Sales Invoice**. This way it will show up in the XML's `BuyerReference` element.
 
