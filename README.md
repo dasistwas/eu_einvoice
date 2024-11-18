@@ -183,11 +183,11 @@ This app can use GitHub Actions for CI. The following workflows are configured:
 
 - [drafthorse](https://pypi.org/project/drafthorse/) by Raphael Michel, released under the Apache License 2.0
 
-    Used to create and parse XML invoices
+    Used to create and parse XML invoices.
 
 - [factur-x](https://pypi.org/project/factur-x/) by Alexis de Lattre, released unser a BSD License
 
-    Used to extract XML data from a PDF file
+    Used to extract XML data from PDF files, and to create PDF files with embedded XML.
 
 ## License
 
