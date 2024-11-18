@@ -174,11 +174,10 @@ doc_events = {
 
 # Overriding Methods
 # ------------------------------
-#
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "eu_einvoice.event.get_events"
-# }
-#
+override_whitelisted_methods = {
+	"frappe.utils.print_format.download_pdf": "eu_einvoice.european_e_invoice.custom.sales_invoice.download_pdf",
+}
+
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps

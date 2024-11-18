@@ -366,3 +366,17 @@ def get_item_rate(item_tax_template: str | None, taxes: list[dict]) -> float | N
 		return tax_rates[0]
 
 	return None
+
+
+@frappe.whitelist(allow_guest=True)
+def download_pdf(
+	doctype: str, name: str, format=None, doc=None, no_letterhead=0, language=None, letterhead=None
+):
+	from facturx import generate_from_binary
+	from frappe.utils.print_format import download_pdf as frappe_download_pdf
+
+	frappe_download_pdf(doctype, name, format, doc, no_letterhead, language, letterhead)
+
+	if doctype == "Sales Invoice":
+		xml_bytes = get_einvoice(name)
+		frappe.local.response.filecontent = generate_from_binary(frappe.local.response.filecontent, xml_bytes)
