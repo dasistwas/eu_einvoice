@@ -103,7 +103,7 @@ The following fields of the **Sales Invoice** are currently considered for the e
 - Total Advance
 - Outstanding Amount
 
-[1] The correct taxable amount is only available starting from ERPNext v16. For earlier versions we currently have to approximate it, which can lead to rounding errors.
+[1] The correct taxable amount is only available starting from ERPNext v16. For earlier versions we currently have to approximate it, which comes with a small error margin.
 
 ### Purchase Invoice
 
