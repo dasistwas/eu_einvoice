@@ -93,7 +93,7 @@ The following fields of the **Sales Invoice** are currently considered for the e
         - Due date
 - Sales Taxs and Charges
     - The _Charge Type_ "Actual" is used as logistics or service charges.
-    - For _Charge Type_ "On Net Total", the taxable amount is calculated as `tax_amount / rate * 100`, if the rate is available in the tax row or in the corresponding Account.
+    - For _Charge Type_ "On Net Total", the taxable amount is calculated as `tax_amount / rate * 100`, if the rate is available in the tax row or in the corresponding Account [1].
     - The _Charge Type_ "On Item Quantity" is not supported.
 - Total
 - Discount Amount
@@ -102,6 +102,8 @@ The following fields of the **Sales Invoice** are currently considered for the e
 - Grand Total
 - Total Advance
 - Outstanding Amount
+
+[1] The correct taxable amount is only available starting from ERPNext v16. For earlier versions we currently have to approximate it, which can lead to rounding errors.
 
 ### Purchase Invoice
 
