@@ -108,8 +108,10 @@ def get_xml(invoice, company, seller_address=None, customer_address=None):
 
 	doc.trade.agreement.buyer.name = invoice.customer_name
 
+	if invoice.buyer_reference:
+		doc.trade.agreement.buyer_reference = invoice.buyer_reference
+
 	if invoice.po_no:
-		doc.trade.agreement.buyer_reference = invoice.po_no
 		doc.trade.agreement.buyer_order.issuer_assigned_id = invoice.po_no
 
 	if invoice.po_date:

@@ -13,4 +13,32 @@ def get_custom_fields():
 				"read_only": 1,
 			}
 		],
+		"Customer": [
+			{
+				"fieldname": "buyer_reference",
+				"label": _("Buyer Reference"),
+				"insert_after": "language",
+				"fieldtype": "Data",
+			},
+		],
+		"Sales Order": [
+			{
+				"fieldname": "buyer_reference",
+				"label": _("Buyer Reference"),
+				"insert_after": "tax_id",
+				"fieldtype": "Data",
+				"fetch_from": "customer.buyer_reference",
+				"fetch_if_empty": 1,
+			},
+		],
+		"Sales Invoice": [
+			{
+				"fieldname": "buyer_reference",
+				"label": _("Buyer Reference"),
+				"insert_after": "tax_id",
+				"fieldtype": "Data",
+				"fetch_from": "customer.buyer_reference",
+				"fetch_if_empty": 1,
+			},
+		],
 	}

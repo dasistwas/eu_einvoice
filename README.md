@@ -43,6 +43,10 @@ For example, let's say your standard **Payment Terms Template** is "Bank Transfe
 
 The retrieval of codes goes from the most specific to the most general. E.g. for determining the VAT type of a line item, we first look for a code using the specific item's _Item Tax Template_ and _Income Account_, then fall back to the code for the invoice's _Tax Category_ or _Sales Taxes and Charges Template_.
 
+### Buyer Reference (German: Leitweg-ID)
+
+If you work with government customers or similar large organizations, you might need to specify their _Buyer Reference_ in the eInvoice. This is done by setting the _Buyer Reference_ field in the **Sales Invoice**. You can already fill this field in the **Customer** master data or the **Sales Order**.
+
 ## Usage
 
 ### Sales Invoice
@@ -53,8 +57,6 @@ When you open the print preview of the **Sales Invoice** and click on "PDF", the
 
 > [!TIP]
 > You can test both XML and PDF+XML files by re-importing them, using the **E Invoice Import** DocType.
-
-For german government customers, the "Leitwegs-ID" should be entered into the field _Customer's Purchase Order_ of the **Sales Invoice**. This way it will show up in the XML's `BuyerReference` element.
 
 The following fields of the **Sales Invoice** are currently considered for the eInvoice:
 
@@ -70,8 +72,9 @@ The following fields of the **Sales Invoice** are currently considered for the e
 - Company Phone (fetched from **Company**)
 - Company Email (fetched from **Company**)
 - Customer Name
+- Buyer Reference (fetched from **Sales Order** or **Customer**)
 - Customer Address
-- Customer's Purchase Order (doubles as "Leitwegs-ID" for german government customers)
+- Customer's Purchase Order
 - Customer's Purchase Order Date
 - Customer's Tax ID
 - Items:
