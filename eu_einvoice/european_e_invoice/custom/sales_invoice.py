@@ -215,8 +215,14 @@ def get_xml(invoice, company, seller_address=None, customer_address=None):
 			tax_rate = tax.rate or frappe.db.get_value("Account", tax.account_head, "tax_rate") or 0
 			trade_tax.rate_applicable_percent = tax_rate
 
-			# We don't know the basis amount for this tax, so we try to calculate it
-			if tax.tax_amount and tax_rate:
+			if len(invoice.taxes) == 1:
+				trade_tax.basis_amount = invoice.net_total
+			elif hasattr(tax, "net_amount"):
+				trade_tax.basis_amount = tax.net_amount
+			elif hasattr(tax, "custom_net_amount"):
+				trade_tax.basis_amount = tax.custom_net_amount
+			elif tax.tax_amount and tax_rate:
+				# We don't know the basis amount for this tax, so we try to calculate it
 				trade_tax.basis_amount = round(tax.tax_amount / tax_rate * 100, 2)
 			else:
 				trade_tax.basis_amount = 0
