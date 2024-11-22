@@ -364,12 +364,12 @@ def get_item_rate(item_tax_template: str | None, taxes: list[dict]) -> float | N
 		tax_template = frappe.get_doc("Item Tax Template", item_tax_template)
 		applicable_accounts = [tax.account_head for tax in taxes if tax.account_head]
 
-		for tax in tax_template.taxes:
-			if tax.tax_type in applicable_accounts:
-				return tax.tax_rate
+		for item_tax in tax_template.taxes:
+			if item_tax.tax_type in applicable_accounts:
+				return item_tax.tax_rate
 
 	# if only one tax is on net total, return its rate
-	tax_rates = [tax.tax_rate for tax in taxes if tax.charge_type == "On Net Total"]
+	tax_rates = [invoice_tax.rate for invoice_tax in taxes if invoice_tax.charge_type == "On Net Total"]
 	if len(tax_rates) == 1:
 		return tax_rates[0]
 
