@@ -66,14 +66,26 @@ The following fields of the **Sales Invoice** are currently considered for the e
 - Due date
 - Language
 - Currency
+- Company
+    - Phone No
+    - Email
+    - Fax
 - Company Name
 - Company Address
+    - Address Line 1
+    - Address Line 2
+    - Postcode
+    - City
+    - Country
 - Company Tax ID
-- Company Phone (fetched from **Company**)
-- Company Email (fetched from **Company**)
 - Customer Name
 - Buyer Reference (fetched from **Sales Order** or **Customer**)
 - Customer Address
+    - Address Line 1
+    - Address Line 2
+    - Postcode
+    - City
+    - Country
 - Customer's Purchase Order
 - Customer's Purchase Order Date
 - Customer's Tax ID
