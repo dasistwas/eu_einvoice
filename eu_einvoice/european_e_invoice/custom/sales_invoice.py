@@ -96,6 +96,8 @@ def get_xml(invoice, company, seller_address=None, customer_address=None):
 		doc.trade.agreement.seller.contact.telephone.number = company.phone_no
 	if company.email:
 		doc.trade.agreement.seller.contact.email.address = company.email
+	if company.fax:
+		doc.trade.agreement.seller.contact.fax.number = company.fax
 
 	if seller_address:
 		doc.trade.agreement.seller.address.line_one = seller_address.address_line1
