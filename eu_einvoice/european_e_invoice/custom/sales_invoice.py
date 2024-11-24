@@ -315,11 +315,19 @@ def get_xml(invoice, company, seller_address=None, customer_address=None):
 
 		doc.trade.settlement.terms.add(payment_terms)
 
+	actual_charge_total = sum(tax.tax_amount for tax in invoice.taxes if tax.charge_type == "Actual")
+	tax_total = sum(tax.tax_amount for tax in invoice.taxes if tax.charge_type != "Actual")
 	doc.trade.settlement.monetary_summation.line_total = invoice.total
-	doc.trade.settlement.monetary_summation.charge_total = Decimal("0.00")
-	doc.trade.settlement.monetary_summation.allowance_total = invoice.discount_amount
-	doc.trade.settlement.monetary_summation.tax_basis_total = invoice.net_total
-	doc.trade.settlement.monetary_summation.tax_total = invoice.total_taxes_and_charges
+
+	if actual_charge_total:
+		doc.trade.settlement.monetary_summation.charge_total = actual_charge_total
+
+	if invoice.discount_amount:
+		doc.trade.settlement.monetary_summation.allowance_total = invoice.discount_amount
+
+	doc.trade.settlement.monetary_summation.tax_basis_total = invoice.net_total + actual_charge_total
+	doc.trade.settlement.monetary_summation.tax_total = tax_total
+	doc.trade.settlement.monetary_summation.tax_total_other_currency.add((tax_total, invoice.currency))
 	doc.trade.settlement.monetary_summation.grand_total = invoice.grand_total
 	doc.trade.settlement.monetary_summation.prepaid_total = invoice.total_advance
 	doc.trade.settlement.monetary_summation.due_amount = invoice.outstanding_amount
