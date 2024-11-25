@@ -1,16 +1,17 @@
+from enum import Enum
 from pathlib import Path
 
 from lxml import objectify
 from saxonche import PySaxonProcessor
 
-CII_STYLESHEET = "EN16931-CII-validation-preprocessed.xsl"
-XRECHNUNG_STYLESHEET = "XRechnung-CII-validation.xsl"
+
+class Stylesheet(str, Enum):
+	EN16931 = "EN16931-CII-validation-preprocessed.xsl"
+	XRECHNUNG = "XRechnung-CII-validation.xsl"
 
 
-def get_validation_errors(xml_string: str) -> list[str]:
-	return get_errors_from_stylesheet(xml_string, CII_STYLESHEET) + get_errors_from_stylesheet(
-		xml_string, XRECHNUNG_STYLESHEET
-	)
+def get_validation_errors(xml_string: str, stylesheet: Stylesheet) -> list[str]:
+	return get_errors_from_stylesheet(xml_string, stylesheet.value)
 
 
 def get_errors_from_stylesheet(xml_string: str, stylesheet: str) -> list[str]:

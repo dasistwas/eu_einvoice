@@ -13,7 +13,7 @@ from frappe import _, _dict, get_site_path
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 
-from eu_einvoice.schematron import get_validation_errors
+from eu_einvoice.schematron import Stylesheet, get_validation_errors
 
 if TYPE_CHECKING:
 	from drafthorse.models.accounting import ApplicableTradeTax
@@ -48,6 +48,8 @@ class EInvoiceImport(Document):
 		buyer_name: DF.Data | None
 		buyer_postcode: DF.Data | None
 		company: DF.Link | None
+		correct_european_invoice: DF.Check
+		correct_german_federal_administration_invoice: DF.Check
 		currency: DF.Link | None
 		due_date: DF.Date | None
 		einvoice: DF.Attach | None
@@ -107,10 +109,9 @@ class EInvoiceImport(Document):
 		xml_bytes = self.get_xml_bytes()
 		doc = DrafthorseDocument.parse(xml_bytes)
 
-		validation_errors = get_validation_errors(xml_bytes.decode("utf-8"))
-		self.validation_errors = (
-			"\n".join(validation_errors) if validation_errors else _("No validation errors found.")
-		)
+		self.validation_errors = ""
+		self.validate_schematron(xml_bytes, Stylesheet.EN16931, _("European Invoice"))
+		self.validate_schematron(xml_bytes, Stylesheet.XRECHNUNG, _("German Federal Administration Invoice"))
 
 		self.id = str(doc.header.id)
 		self.issue_date = str(doc.header.issue_date_time)
@@ -137,6 +138,15 @@ class EInvoiceImport(Document):
 		self.payment_terms = []
 		for term in doc.trade.settlement.terms.children:
 			self.parse_payment_term(term)
+
+	def validate_schematron(self, xml_bytes, stylesheet: Stylesheet, heading: str):
+		validation_errors = get_validation_errors(xml_bytes.decode("utf-8"), stylesheet)
+
+		if not any(validation_errors):
+			self.correct_european_invoice = 1
+		else:
+			self.correct_european_invoice = 0
+			self.validation_errors += "\n" + format_heading(heading) + "\n".join(validation_errors)
 
 	def parse_seller(self, seller: "TradeParty"):
 		self.seller_name = str(seller.name)
@@ -252,6 +262,10 @@ class EInvoiceImport(Document):
 					reference_doctype=self.doctype,
 					reference_name=self.name,
 				)
+
+
+def format_heading(heading: str) -> str:
+	return "-" * (len(heading) + 4) + "\n" + f"{heading}\n" + "-" * (len(heading) + 4) + "\n"
 
 
 def get_xml_bytes(file: Path) -> bytes:
