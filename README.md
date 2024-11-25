@@ -124,6 +124,8 @@ The following fields of the **Sales Invoice** are currently considered for the e
 
 To import a new eInvoice, create a new **E Invoice Import** and upload the XML or PDF file.
 
+The imported XML is validated against the "EN16931 CII" and "XRechnung CII" schematron. You'll see the validation errors in the import's _Validation_ tab. It is still possible to import an invoice, even if there are formal validation errors.
+
 Taxes are mapped to "Actual" charges in the **Purchase Invoice**, so that ERPNext does not try to recalculate them.
 
 ## Add your custom logic

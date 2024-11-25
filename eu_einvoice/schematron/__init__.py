@@ -3,11 +3,18 @@ from pathlib import Path
 from lxml import objectify
 from saxonche import PySaxonProcessor
 
-STYLESHEET = "EN16931-CII-validation-preprocessed.xsl"
+CII_STYLESHEET = "EN16931-CII-validation-preprocessed.xsl"
+XRECHNUNG_STYLESHEET = "XRechnung-CII-validation.xsl"
 
 
 def get_validation_errors(xml_string: str) -> list[str]:
-	stylesheet_path = Path(__file__).parent / STYLESHEET
+	return get_errors_from_stylesheet(xml_string, CII_STYLESHEET) + get_errors_from_stylesheet(
+		xml_string, XRECHNUNG_STYLESHEET
+	)
+
+
+def get_errors_from_stylesheet(xml_string: str, stylesheet: str) -> list[str]:
+	stylesheet_path = Path(__file__).parent / stylesheet
 	report = get_validation_report(xml_string, str(stylesheet_path))
 	return extract_failed_asserts(report)
 
