@@ -22,6 +22,8 @@ class CommonCodeRetriever:
 				codes = get_codes_for(code_list, doctype, name)
 				if codes:
 					break
+			if codes:
+				break
 
 		return codes[0] if codes else None
 
