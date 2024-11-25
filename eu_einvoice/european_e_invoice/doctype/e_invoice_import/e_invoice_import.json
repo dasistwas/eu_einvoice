@@ -46,7 +46,9 @@
   "currency",
   "taxes",
   "due_date",
-  "payment_terms"
+  "payment_terms",
+  "validation_tab",
+  "validation_errors"
  ],
  "fields": [
   {
@@ -296,6 +298,17 @@
    "fieldtype": "Date",
    "label": "Due Date",
    "read_only": 1
+  },
+  {
+   "fieldname": "validation_errors",
+   "fieldtype": "Text",
+   "label": "Validation Errors",
+   "read_only": 1
+  },
+  {
+   "fieldname": "validation_tab",
+   "fieldtype": "Tab Break",
+   "label": "Validation"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -306,7 +319,7 @@
    "link_fieldname": "e_invoice_import"
   }
  ],
- "modified": "2024-10-14 10:33:22.117790",
+ "modified": "2024-11-25 04:20:32.132043",
  "modified_by": "Administrator",
  "module": "European e-Invoice",
  "name": "E Invoice Import",

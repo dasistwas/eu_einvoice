@@ -13,6 +13,8 @@ from frappe import _, _dict, get_site_path
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 
+from eu_einvoice.schematron import get_validation_errors
+
 if TYPE_CHECKING:
 	from drafthorse.models.accounting import ApplicableTradeTax
 	from drafthorse.models.party import PostalTradeAddress, TradeParty
@@ -64,6 +66,7 @@ class EInvoiceImport(Document):
 		supplier: DF.Link | None
 		supplier_address: DF.Link | None
 		taxes: DF.Table[EInvoiceTradeTax]
+		validation_errors: DF.Text | None
 	# end: auto-generated types
 
 	def validate(self):
@@ -97,13 +100,17 @@ class EInvoiceImport(Document):
 	def on_submit(self):
 		self.add_seller_product_ids_to_items()
 
-	def get_parsed_einvoice(self) -> DrafthorseDocument:
-		return DrafthorseDocument.parse(
-			get_xml_bytes(Path(get_site_path(self.einvoice.lstrip("/"))).resolve())
-		)
+	def get_xml_bytes(self) -> bytes:
+		return get_xml_bytes(Path(get_site_path(self.einvoice.lstrip("/"))).resolve())
 
 	def read_values_from_einvoice(self) -> None:
-		doc = self.get_parsed_einvoice()
+		xml_bytes = self.get_xml_bytes()
+		doc = DrafthorseDocument.parse(xml_bytes)
+
+		validation_errors = get_validation_errors(xml_bytes.decode("utf-8"))
+		self.validation_errors = (
+			"\n".join(validation_errors) if validation_errors else _("No validation errors found.")
+		)
 
 		self.id = str(doc.header.id)
 		self.issue_date = str(doc.header.issue_date_time)

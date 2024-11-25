@@ -206,6 +206,18 @@ This app can use GitHub Actions for CI. The following workflows are configured:
 
     Used to extract XML data from PDF files, and to create PDF files with embedded XML.
 
+- [SaxonC](https://pypi.org/project/saxonche/) by Saxonica
+
+    Used for XSL transformation (validate XML against schematron).
+
+- [lxml](https://github.com/lxml/lxml) by Infrae
+
+    Used for general XML parsing.
+
+- [SchXslt](https://github.com/schxslt/schxslt) by David Maus
+
+    Used to convert Schematron files to XSL.
+
 ## Sponsors
 
 Many thanks to the following companies for sponsoring the initial development of this app:
