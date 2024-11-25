@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import frappe
 from drafthorse.models.document import Document as DrafthorseDocument
 from erpnext import get_default_company
+from erpnext.edi.doctype.code_list.code_list import get_docnames_for
 from facturx import get_xml_from_pdf
 from frappe import _, _dict, get_site_path
 from frappe.model.document import Document
@@ -245,7 +246,13 @@ class EInvoiceImport(Document):
 				continue
 
 			if row.unit_code:
-				row.uom = frappe.db.get_value("UOM", {"common_code": row.unit_code}, "name")
+				rec20_3 = get_docnames_for("urn:xoev-de:kosit:codeliste:rec20_3", "UOM", row.unit_code)
+				if rec20_3:
+					row.uom = rec20_3[0]
+				else:
+					rec21_3 = get_docnames_for("urn:xoev-de:kosit:codeliste:rec21_3", "UOM", row.unit_code)
+					if rec21_3:
+						row.uom = rec21_3[0]
 			elif row.item:
 				stock_uom, purchase_uom = frappe.db.get_value("Item", row.item, ["stock_uom", "purchase_uom"])
 				row.uom = purchase_uom or stock_uom
