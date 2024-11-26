@@ -50,7 +50,13 @@ def get_xml(invoice, company, seller_address=None, customer_address=None):
 	invoice.run_method("before_einvoice_generation")
 
 	doc = Document()
-	doc.context.guideline_parameter.id = "urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:extended"
+
+	# Default values according to XRechnung 3.0.2
+	doc.context.business_parameter.id = "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0"
+	doc.context.guideline_parameter.id = (
+		"urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0"
+	)
+
 	doc.header.id = invoice.name
 
 	# https://unece.org/fileadmin/DAM/trade/untdid/d16b/tred/tred1001.htm
