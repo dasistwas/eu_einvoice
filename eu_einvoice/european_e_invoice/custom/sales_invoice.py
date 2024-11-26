@@ -4,7 +4,7 @@ from decimal import Decimal
 import frappe
 from drafthorse.models.accounting import ApplicableTradeTax
 from drafthorse.models.document import Document
-from drafthorse.models.party import TaxRegistration
+from drafthorse.models.party import TaxRegistration, URIUniversalCommunication
 from drafthorse.models.payment import PaymentTerms
 from drafthorse.models.trade import LogisticsServiceCharge
 from drafthorse.models.tradelines import LineItem
@@ -127,6 +127,11 @@ def get_xml(invoice, company, seller_address=None, customer_address=None):
 		doc.trade.agreement.buyer.address.country_id = frappe.db.get_value(
 			"Country", customer_address.country, "code"
 		).upper()
+
+	if invoice.contact_email:
+		doc.trade.agreement.buyer.electronic_address.add(
+			URIUniversalCommunication(uri_ID=("EM", invoice.contact_email))
+		)
 
 	if invoice.tax_id:
 		try:

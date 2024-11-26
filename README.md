@@ -86,6 +86,7 @@ The following fields of the **Sales Invoice** are currently considered for the e
     - Postcode
     - City
     - Country
+- Contact Email
 - Customer's Purchase Order
 - Customer's Purchase Order Date
 - Customer's Tax ID
