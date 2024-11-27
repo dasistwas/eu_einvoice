@@ -37,16 +37,26 @@ def get_einvoice(invoice_id: str) -> bytes:
 	if invoice.company_address:
 		seller_address = frappe.get_doc("Address", invoice.company_address)
 
-	customer_address = None
+	buyer_address = None
 	if invoice.customer_address:
-		customer_address = frappe.get_doc("Address", invoice.customer_address)
+		buyer_address = frappe.get_doc("Address", invoice.customer_address)
+
+	seller_contact = None
+	if invoice.company_contact_person:
+		seller_contact = frappe.get_doc("Contact", invoice.company_contact_person)
+
+	buyer_contact = None
+	if invoice.contact_person:
+		buyer_contact = frappe.get_doc("Contact", invoice.contact_person)
 
 	company = frappe.get_doc("Company", invoice.company)
 
-	return get_xml(invoice, company, seller_address, customer_address)
+	return get_xml(invoice, company, seller_address, buyer_address, seller_contact, buyer_contact)
 
 
-def get_xml(invoice, company, seller_address=None, customer_address=None):
+def get_xml(
+	invoice, company, seller_address=None, buyer_address=None, seller_contact=None, buyer_contact=None
+):
 	invoice.run_method("before_einvoice_generation")
 
 	doc = Document()
@@ -98,13 +108,26 @@ def get_xml(invoice, company, seller_address=None, customer_address=None):
 			)
 		)
 
-	if company.phone_no:
-		doc.trade.agreement.seller.contact.telephone.number = company.phone_no
-	if company.email:
-		doc.trade.agreement.seller.contact.email.address = company.email
+	seller_contact_email = company.email
+	seller_contact_phone = company.phone_no
+	if seller_contact:
+		doc.trade.agreement.seller.contact.person_name = seller_contact.full_name
+		if seller_contact.department:
+			doc.trade.agreement.seller.contact.department_name = seller_contact.department
+		if seller_contact.email_id:
+			seller_contact_email = seller_contact.email_id
+		if seller_contact.phone:
+			seller_contact_phone = seller_contact.phone
+
+	if seller_contact_phone:
+		doc.trade.agreement.seller.contact.telephone.number = seller_contact_phone
+
+	if seller_contact_email:
+		doc.trade.agreement.seller.contact.email.address = seller_contact_email
 		doc.trade.agreement.seller.electronic_address.add(
-			URIUniversalCommunication(uri_ID=("EM", company.email))
+			URIUniversalCommunication(uri_ID=("EM", seller_contact_email))
 		)
+
 	if company.fax:
 		doc.trade.agreement.seller.contact.fax.number = company.fax
 
@@ -128,16 +151,28 @@ def get_xml(invoice, company, seller_address=None, customer_address=None):
 	if invoice.po_date:
 		doc.trade.agreement.buyer_order.issue_date_time = invoice.po_date
 
-	if customer_address:
-		doc.trade.agreement.buyer.address.line_one = customer_address.address_line1
-		doc.trade.agreement.buyer.address.line_two = customer_address.address_line2
-		doc.trade.agreement.buyer.address.postcode = customer_address.pincode
-		doc.trade.agreement.buyer.address.city_name = customer_address.city
+	if buyer_address:
+		doc.trade.agreement.buyer.address.line_one = buyer_address.address_line1
+		doc.trade.agreement.buyer.address.line_two = buyer_address.address_line2
+		doc.trade.agreement.buyer.address.postcode = buyer_address.pincode
+		doc.trade.agreement.buyer.address.city_name = buyer_address.city
 		doc.trade.agreement.buyer.address.country_id = frappe.db.get_value(
-			"Country", customer_address.country, "code"
+			"Country", buyer_address.country, "code"
 		).upper()
 
+	buyer_contact_phone = invoice.contact_mobile
+	if buyer_contact:
+		doc.trade.agreement.buyer.contact.person_name = buyer_contact.full_name
+		if buyer_contact.department:
+			doc.trade.agreement.buyer.contact.department_name = buyer_contact.department
+		if buyer_contact.phone:
+			buyer_contact_phone = buyer_contact.phone
+
+	if buyer_contact_phone:
+		doc.trade.agreement.buyer.contact.telephone.number = buyer_contact_phone
+
 	if invoice.contact_email:
+		doc.trade.agreement.buyer.contact.email.address = invoice.contact_email
 		doc.trade.agreement.buyer.electronic_address.add(
 			URIUniversalCommunication(uri_ID=("EM", invoice.contact_email))
 		)
@@ -322,6 +357,7 @@ def get_xml(invoice, company, seller_address=None, customer_address=None):
 
 		if ps.discount and ps.discount_date:
 			payment_terms.discount_terms.basis_date_time = ps.discount_date
+			payment_terms.discount_terms.basis_amount = ps.payment_amount
 			if ps.discount_type == "Percentage":
 				payment_terms.discount_terms.calculation_percent = ps.discount
 			elif ps.discount_type == "Amount":

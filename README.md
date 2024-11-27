@@ -77,6 +77,11 @@ The following fields of the **Sales Invoice** are currently considered for the e
     - Postcode
     - City
     - Country
+- Company Contact Person
+    - Full Name
+    - Email Address (takes precedence over Company > Email)
+    - Phone (takes precedence over Company > Phone No)
+    - Department
 - Company Tax ID
 - Customer Name
 - Buyer Reference (fetched from **Sales Order** or **Customer**)
@@ -87,6 +92,11 @@ The following fields of the **Sales Invoice** are currently considered for the e
     - City
     - Country
 - Contact Email
+- Contact Mobile (takes precedence over Contact Person > Phone)
+- Contact Person
+    - Full Name
+    - Phone
+    - Department
 - Customer's Purchase Order
 - Customer's Purchase Order Date
 - Customer's Tax ID
