@@ -1,5 +1,5 @@
 import re
-from decimal import Decimal
+from typing import TYPE_CHECKING, Optional
 
 import frappe
 from drafthorse.models.accounting import ApplicableTradeTax
@@ -13,6 +13,13 @@ from frappe.core.utils import html2text
 from frappe.utils.data import flt
 
 from eu_einvoice.common_codes import CommonCodeRetriever
+
+if TYPE_CHECKING:
+	from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
+	from erpnext.accounts.doctype.sales_invoice_item.sales_invoice_item import SalesInvoiceItem
+	from erpnext.setup.doctype.company.company import Company
+	from frappe.contacts.doctype.address.address import Address
+	from frappe.contacts.doctype.contact.contact import Contact
 
 uom_codes = CommonCodeRetriever(
 	["urn:xoev-de:kosit:codeliste:rec20_3", "urn:xoev-de:kosit:codeliste:rec21_3"], "C62"
@@ -32,6 +39,7 @@ def download_xrechnung(invoice_id: str):
 def get_einvoice(invoice_id: str) -> bytes:
 	invoice = frappe.get_doc("Sales Invoice", invoice_id)
 	invoice.check_permission("read")
+	invoice.run_method("before_einvoice_generation")
 
 	seller_address = None
 	if invoice.company_address:
@@ -51,147 +59,194 @@ def get_einvoice(invoice_id: str) -> bytes:
 
 	company = frappe.get_doc("Company", invoice.company)
 
-	return get_xml(invoice, company, seller_address, buyer_address, seller_contact, buyer_contact)
-
-
-def get_xml(
-	invoice, company, seller_address=None, buyer_address=None, seller_contact=None, buyer_contact=None
-):
-	invoice.run_method("before_einvoice_generation")
-
-	doc = Document()
-
-	# Default values according to XRechnung 3.0.2
-	doc.context.business_parameter.id = "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0"
-	doc.context.guideline_parameter.id = (
-		"urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0"
+	generator = EInvoiceGenerator(
+		invoice, company, seller_address, buyer_address, seller_contact, buyer_contact
 	)
+	generator.create_einvoice()
+	doc = generator.get_einvoice()
 
-	doc.header.id = invoice.name
+	invoice.run_method("after_einvoice_generation", doc)
 
-	# https://unece.org/fileadmin/DAM/trade/untdid/d16b/tred/tred1001.htm
-	if invoice.is_return:
-		# -- Credit note --
-		# Document/message for providing credit information to the relevant party.
-		doc.header.type_code = "381"
-	elif invoice.amended_from:
-		# -- Corrected invoice --
-		# Commercial invoice that includes revised information differing from an
-		# earlier submission of the same invoice.
-		doc.header.type_code = "384"
-	else:
-		# -- Commercial invoice --
-		# Document/message claiming payment for goods or services supplied under
-		# conditions agreed between seller and buyer.
-		doc.header.type_code = "380"
-	doc.header.issue_date_time = invoice.posting_date
+	return doc.serialize(schema="FACTUR-X_EXTENDED")
 
-	doc.trade.settlement.payee.name = invoice.customer_name
-	doc.trade.settlement.currency_code = invoice.currency
-	doc.trade.settlement.payment_means.type_code = payment_means_codes.get(
-		[("Payment Terms Template", invoice.payment_terms_template)]
-		+ [("Mode of Payment", term.mode_of_payment) for term in invoice.payment_schedule]
-	)
 
-	doc.trade.agreement.seller.name = invoice.company
-	if invoice.company_tax_id:
-		try:
-			seller_tax_id = validate_vat_id(invoice.company_tax_id.strip())
-			seller_vat_scheme = "VA"
-		except ValueError:
-			seller_tax_id = invoice.company_tax_id.strip()
-			seller_vat_scheme = "FC"
+class EInvoiceGenerator:
+	"""Map ERPNext entities to a Drafthorse document."""
 
-		doc.trade.agreement.seller.tax_registrations.add(
-			TaxRegistration(
-				id=(seller_vat_scheme, seller_tax_id),
+	def __init__(
+		self,
+		invoice: "SalesInvoice",
+		company: "Company",
+		seller_address: Optional["Address"] = None,
+		buyer_address: Optional["Address"] = None,
+		seller_contact: Optional["Contact"] = None,
+		buyer_contact: Optional["Contact"] = None,
+	):
+		self.invoice = invoice
+		self.company = company
+		self.seller_address = seller_address
+		self.buyer_address = buyer_address
+		self.seller_contact = seller_contact
+		self.buyer_contact = buyer_contact
+		self.doc = None
+
+	def get_einvoice(self) -> Document | None:
+		"""Return the einvoice document as a Python object."""
+		return self.doc
+
+	def create_einvoice(self):
+		"""Create the einvoice document as a Python object."""
+		self.doc = Document()
+
+		self._set_context()
+		self._set_header()
+		self._set_seller()
+		self._set_buyer()
+
+		if self.invoice.buyer_reference:
+			self.doc.trade.agreement.buyer_reference = self.invoice.buyer_reference
+
+		if self.invoice.po_no:
+			self.doc.trade.agreement.buyer_order.issuer_assigned_id = self.invoice.po_no
+
+		if self.invoice.po_date:
+			self.doc.trade.agreement.buyer_order.issue_date_time = self.invoice.po_date
+
+		for item in self.invoice.items:
+			self._add_line_item(item)
+
+		tax_added = self._add_taxes_and_charges()
+		if not tax_added:
+			self._add_empty_tax()
+
+		self.doc.trade.settlement.currency_code = self.invoice.currency
+		self.doc.trade.settlement.payment_means.type_code = payment_means_codes.get(
+			[("Payment Terms Template", self.invoice.payment_terms_template)]
+			+ [("Mode of Payment", term.mode_of_payment) for term in self.invoice.payment_schedule]
+		)
+		self._add_payment_terms()
+		self._set_totals()
+
+	def _set_context(self):
+		"""Set default context according to XRechnung 3.0.2"""
+		self.doc.context.business_parameter.id = "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0"
+		self.doc.context.guideline_parameter.id = (
+			"urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0"
+		)
+
+	def _set_header(self):
+		self.doc.header.id = self.invoice.name
+
+		# https://unece.org/fileadmin/DAM/trade/untdid/d16b/tred/tred1001.htm
+		if self.invoice.is_return:
+			# -- Credit note --
+			# Document/message for providing credit information to the relevant party.
+			self.doc.header.type_code = "381"
+		elif self.invoice.amended_from:
+			# -- Corrected invoice --
+			# Commercial invoice that includes revised information differing from an
+			# earlier submission of the same invoice.
+			self.doc.header.type_code = "384"
+		else:
+			# -- Commercial invoice --
+			# Document/message claiming payment for goods or services supplied under
+			# conditions agreed between seller and buyer.
+			self.doc.header.type_code = "380"
+
+		self.doc.header.issue_date_time = self.invoice.posting_date
+
+	def _set_seller(self):
+		self.doc.trade.agreement.seller.name = self.invoice.company
+		if self.invoice.company_tax_id:
+			try:
+				seller_tax_id = validate_vat_id(self.invoice.company_tax_id.strip())
+				seller_vat_scheme = "VA"
+			except ValueError:
+				seller_tax_id = self.invoice.company_tax_id.strip()
+				seller_vat_scheme = "FC"
+
+			self.doc.trade.agreement.seller.tax_registrations.add(
+				TaxRegistration(
+					id=(seller_vat_scheme, seller_tax_id),
+				)
 			)
-		)
 
-	seller_contact_email = company.email
-	seller_contact_phone = company.phone_no
-	if seller_contact:
-		doc.trade.agreement.seller.contact.person_name = seller_contact.full_name
-		if seller_contact.department:
-			doc.trade.agreement.seller.contact.department_name = seller_contact.department
-		if seller_contact.email_id:
-			seller_contact_email = seller_contact.email_id
-		if seller_contact.phone:
-			seller_contact_phone = seller_contact.phone
+		seller_contact_email = self.company.email
+		seller_contact_phone = self.company.phone_no
+		if self.seller_contact:
+			self.doc.trade.agreement.seller.contact.person_name = self.seller_contact.full_name
+			if self.seller_contact.department:
+				self.doc.trade.agreement.seller.contact.department_name = self.seller_contact.department
+			if self.seller_contact.email_id:
+				seller_contact_email = self.seller_contact.email_id
+			if self.seller_contact.phone:
+				seller_contact_phone = self.seller_contact.phone
 
-	if seller_contact_phone:
-		doc.trade.agreement.seller.contact.telephone.number = seller_contact_phone
+		if seller_contact_phone:
+			self.doc.trade.agreement.seller.contact.telephone.number = seller_contact_phone
 
-	if seller_contact_email:
-		doc.trade.agreement.seller.contact.email.address = seller_contact_email
-		doc.trade.agreement.seller.electronic_address.add(
-			URIUniversalCommunication(uri_ID=("EM", seller_contact_email))
-		)
-
-	if company.fax:
-		doc.trade.agreement.seller.contact.fax.number = company.fax
-
-	if seller_address:
-		doc.trade.agreement.seller.address.line_one = seller_address.address_line1
-		doc.trade.agreement.seller.address.line_two = seller_address.address_line2
-		doc.trade.agreement.seller.address.postcode = seller_address.pincode
-		doc.trade.agreement.seller.address.city_name = seller_address.city
-		doc.trade.agreement.seller.address.country_id = frappe.db.get_value(
-			"Country", seller_address.country, "code"
-		).upper()
-
-	doc.trade.agreement.buyer.name = invoice.customer_name
-
-	if invoice.buyer_reference:
-		doc.trade.agreement.buyer_reference = invoice.buyer_reference
-
-	if invoice.po_no:
-		doc.trade.agreement.buyer_order.issuer_assigned_id = invoice.po_no
-
-	if invoice.po_date:
-		doc.trade.agreement.buyer_order.issue_date_time = invoice.po_date
-
-	if buyer_address:
-		doc.trade.agreement.buyer.address.line_one = buyer_address.address_line1
-		doc.trade.agreement.buyer.address.line_two = buyer_address.address_line2
-		doc.trade.agreement.buyer.address.postcode = buyer_address.pincode
-		doc.trade.agreement.buyer.address.city_name = buyer_address.city
-		doc.trade.agreement.buyer.address.country_id = frappe.db.get_value(
-			"Country", buyer_address.country, "code"
-		).upper()
-
-	buyer_contact_phone = invoice.contact_mobile
-	if buyer_contact:
-		doc.trade.agreement.buyer.contact.person_name = buyer_contact.full_name
-		if buyer_contact.department:
-			doc.trade.agreement.buyer.contact.department_name = buyer_contact.department
-		if buyer_contact.phone:
-			buyer_contact_phone = buyer_contact.phone
-
-	if buyer_contact_phone:
-		doc.trade.agreement.buyer.contact.telephone.number = buyer_contact_phone
-
-	if invoice.contact_email:
-		doc.trade.agreement.buyer.contact.email.address = invoice.contact_email
-		doc.trade.agreement.buyer.electronic_address.add(
-			URIUniversalCommunication(uri_ID=("EM", invoice.contact_email))
-		)
-
-	if invoice.tax_id:
-		try:
-			customer_tax_id = validate_vat_id(invoice.tax_id.strip())
-			customer_vat_scheme = "VA"
-		except ValueError:
-			customer_tax_id = invoice.tax_id.strip()
-			customer_vat_scheme = "FC"
-
-		doc.trade.agreement.buyer.tax_registrations.add(
-			TaxRegistration(
-				id=(customer_vat_scheme, customer_tax_id),
+		if seller_contact_email:
+			self.doc.trade.agreement.seller.contact.email.address = seller_contact_email
+			self.doc.trade.agreement.seller.electronic_address.add(
+				URIUniversalCommunication(uri_ID=("EM", seller_contact_email))
 			)
-		)
 
-	for item in invoice.items:
+		if self.company.fax:
+			self.doc.trade.agreement.seller.contact.fax.number = self.company.fax
+
+		if self.seller_address:
+			self.doc.trade.agreement.seller.address.line_one = self.seller_address.address_line1
+			self.doc.trade.agreement.seller.address.line_two = self.seller_address.address_line2
+			self.doc.trade.agreement.seller.address.postcode = self.seller_address.pincode
+			self.doc.trade.agreement.seller.address.city_name = self.seller_address.city
+			self.doc.trade.agreement.seller.address.country_id = frappe.db.get_value(
+				"Country", self.seller_address.country, "code"
+			).upper()
+
+	def _set_buyer(self):
+		self.doc.trade.agreement.buyer.name = self.invoice.customer_name
+
+		if self.buyer_address:
+			self.doc.trade.agreement.buyer.address.line_one = self.buyer_address.address_line1
+			self.doc.trade.agreement.buyer.address.line_two = self.buyer_address.address_line2
+			self.doc.trade.agreement.buyer.address.postcode = self.buyer_address.pincode
+			self.doc.trade.agreement.buyer.address.city_name = self.buyer_address.city
+			self.doc.trade.agreement.buyer.address.country_id = frappe.db.get_value(
+				"Country", self.buyer_address.country, "code"
+			).upper()
+
+		buyer_contact_phone = self.invoice.contact_mobile
+		if self.buyer_contact:
+			self.doc.trade.agreement.buyer.contact.person_name = self.buyer_contact.full_name
+			if self.buyer_contact.department:
+				self.doc.trade.agreement.buyer.contact.department_name = self.buyer_contact.department
+			if self.buyer_contact.phone:
+				buyer_contact_phone = self.buyer_contact.phone
+
+		if buyer_contact_phone:
+			self.doc.trade.agreement.buyer.contact.telephone.number = buyer_contact_phone
+
+		if self.invoice.contact_email:
+			self.doc.trade.agreement.buyer.contact.email.address = self.invoice.contact_email
+			self.doc.trade.agreement.buyer.electronic_address.add(
+				URIUniversalCommunication(uri_ID=("EM", self.invoice.contact_email))
+			)
+
+		if self.invoice.tax_id:
+			try:
+				customer_tax_id = validate_vat_id(self.invoice.tax_id.strip())
+				customer_vat_scheme = "VA"
+			except ValueError:
+				customer_tax_id = self.invoice.tax_id.strip()
+				customer_vat_scheme = "FC"
+
+			self.doc.trade.agreement.buyer.tax_registrations.add(
+				TaxRegistration(
+					id=(customer_vat_scheme, customer_tax_id),
+				)
+			)
+
+	def _add_line_item(self, item: "SalesInvoiceItem"):
 		li = LineItem()
 		li.document.line_id = str(item.idx)
 		li.product.name = item.item_name
@@ -217,8 +272,8 @@ def get_xml(
 			[
 				("Item Tax Template", item.item_tax_template),
 				("Account", item.income_account),
-				("Tax Category", invoice.tax_category),
-				("Sales Taxes and Charges Template", invoice.taxes_and_charges),
+				("Tax Category", self.invoice.tax_category),
+				("Sales Taxes and Charges Template", self.invoice.taxes_and_charges),
 			]
 		)
 		if li.settlement.trade_tax.category_code._text == "AE":
@@ -226,7 +281,7 @@ def get_xml(
 			li.settlement.trade_tax.rate_applicable_percent = 0
 		else:
 			li.settlement.trade_tax.rate_applicable_percent = get_item_rate(
-				item.item_tax_template, invoice.taxes
+				item.item_tax_template, self.invoice.taxes
 			)
 
 		if li.settlement.trade_tax.rate_applicable_percent._value == 0:
@@ -234,157 +289,163 @@ def get_xml(
 				[
 					("Item Tax Template", item.item_tax_template),
 					("Account", item.income_account),
-					("Tax Category", invoice.tax_category),
-					("Sales Taxes and Charges Template", invoice.taxes_and_charges),
+					("Tax Category", self.invoice.tax_category),
+					("Sales Taxes and Charges Template", self.invoice.taxes_and_charges),
 				]
 			)
 
 		li.settlement.monetary_summation.total_amount = item.amount
-		doc.trade.items.add(li)
+		self.doc.trade.items.add(li)
 
-	tax_added = False
-	for i, tax in enumerate(invoice.taxes):
-		if not tax.tax_amount:
-			continue
+	def _add_taxes_and_charges(self):
+		tax_added = False
+		for i, tax in enumerate(self.invoice.taxes):
+			if not tax.tax_amount:
+				continue
 
-		if tax.charge_type == "Actual":
-			service_charge = LogisticsServiceCharge()
-			service_charge.description = tax.description
-			service_charge.applied_amount = tax.tax_amount
-			doc.trade.settlement.service_charge.add(service_charge)
-		elif tax.charge_type == "On Net Total":
-			trade_tax = ApplicableTradeTax()
-			trade_tax.calculated_amount = tax.tax_amount
-			trade_tax.type_code = "VAT"
-			trade_tax.category_code = duty_tax_fee_category_codes.get(
-				[
-					("Account", tax.account_head),
-					("Tax Category", invoice.tax_category),
-					("Sales Taxes and Charges Template", invoice.taxes_and_charges),
-				]
-			)
-			tax_rate = tax.rate or frappe.db.get_value("Account", tax.account_head, "tax_rate") or 0
-			trade_tax.rate_applicable_percent = tax_rate
-
-			if len(invoice.taxes) == 1:
-				trade_tax.basis_amount = invoice.net_total
-			elif hasattr(tax, "net_amount"):
-				trade_tax.basis_amount = tax.net_amount
-			elif hasattr(tax, "custom_net_amount"):
-				trade_tax.basis_amount = tax.custom_net_amount
-			elif tax.tax_amount and tax_rate:
-				# We don't know the basis amount for this tax, so we try to calculate it
-				trade_tax.basis_amount = round(tax.tax_amount / tax_rate * 100, 2)
-			else:
-				trade_tax.basis_amount = 0
-
-			doc.trade.settlement.trade_tax.add(trade_tax)
-			tax_added = True
-		elif tax.charge_type == "On Previous Row Amount":
-			trade_tax = ApplicableTradeTax()
-			trade_tax.basis_amount = invoice.taxes[i - 1].tax_amount
-			trade_tax.rate_applicable_percent = tax.rate
-			trade_tax.calculated_amount = tax.tax_amount
-
-			if invoice.taxes[i - 1].charge_type == "Actual":
-				# VAT for a LogisticsServiceCharge
+			if tax.charge_type == "Actual":
+				service_charge = LogisticsServiceCharge()
+				service_charge.description = tax.description
+				service_charge.applied_amount = tax.tax_amount
+				self.doc.trade.settlement.service_charge.add(service_charge)
+			elif tax.charge_type == "On Net Total":
+				trade_tax = ApplicableTradeTax()
+				trade_tax.calculated_amount = tax.tax_amount
 				trade_tax.type_code = "VAT"
-			else:
-				# A tax or duty applied on and in addition to existing duties and taxes.
-				trade_tax.type_code = "SUR"
+				trade_tax.category_code = duty_tax_fee_category_codes.get(
+					[
+						("Account", tax.account_head),
+						("Tax Category", self.invoice.tax_category),
+						("Sales Taxes and Charges Template", self.invoice.taxes_and_charges),
+					]
+				)
+				tax_rate = tax.rate or frappe.db.get_value("Account", tax.account_head, "tax_rate") or 0
+				trade_tax.rate_applicable_percent = tax_rate
 
-			trade_tax.category_code = duty_tax_fee_category_codes.get(
-				[
-					("Account", tax.account_head),
-					("Tax Category", invoice.tax_category),
-					("Sales Taxes and Charges Template", invoice.taxes_and_charges),
-				]
-			)
-			doc.trade.settlement.trade_tax.add(trade_tax)
-			tax_added = True
-		elif tax.charge_type == "On Previous Row Total":
-			trade_tax = ApplicableTradeTax()
-			trade_tax.basis_amount = invoice.taxes[i - 1].total
-			trade_tax.rate_applicable_percent = tax.rate
-			trade_tax.calculated_amount = tax.tax_amount
+				if len(self.invoice.taxes) == 1:
+					trade_tax.basis_amount = self.invoice.net_total
+				elif hasattr(tax, "net_amount"):
+					trade_tax.basis_amount = tax.net_amount
+				elif hasattr(tax, "custom_net_amount"):
+					trade_tax.basis_amount = tax.custom_net_amount
+				elif tax.tax_amount and tax_rate:
+					# We don't know the basis amount for this tax, so we try to calculate it
+					trade_tax.basis_amount = round(tax.tax_amount / tax_rate * 100, 2)
+				else:
+					trade_tax.basis_amount = 0
 
-			if invoice.taxes[i - 1].charge_type == "Actual":
-				# VAT for a LogisticsServiceCharge
-				trade_tax.type_code = "VAT"
-			else:
-				# A tax or duty applied on and in addition to existing duties and taxes.
-				trade_tax.type_code = "SUR"
+				self.doc.trade.settlement.trade_tax.add(trade_tax)
+				tax_added = True
+			elif tax.charge_type == "On Previous Row Amount":
+				trade_tax = ApplicableTradeTax()
+				trade_tax.basis_amount = self.invoice.taxes[i - 1].tax_amount
+				trade_tax.rate_applicable_percent = tax.rate
+				trade_tax.calculated_amount = tax.tax_amount
 
-			trade_tax.category_code = duty_tax_fee_category_codes.get(
-				[
-					("Account", tax.account_head),
-					("Tax Category", invoice.tax_category),
-					("Sales Taxes and Charges Template", invoice.taxes_and_charges),
-				]
-			)
-			doc.trade.settlement.trade_tax.add(trade_tax)
-			tax_added = True
+				if self.invoice.taxes[i - 1].charge_type == "Actual":
+					# VAT for a LogisticsServiceCharge
+					trade_tax.type_code = "VAT"
+				else:
+					# A tax or duty applied on and in addition to existing duties and taxes.
+					trade_tax.type_code = "SUR"
 
-	if not tax_added:
+				trade_tax.category_code = duty_tax_fee_category_codes.get(
+					[
+						("Account", tax.account_head),
+						("Tax Category", self.invoice.tax_category),
+						("Sales Taxes and Charges Template", self.invoice.taxes_and_charges),
+					]
+				)
+				self.doc.trade.settlement.trade_tax.add(trade_tax)
+				tax_added = True
+			elif tax.charge_type == "On Previous Row Total":
+				trade_tax = ApplicableTradeTax()
+				trade_tax.basis_amount = self.invoice.taxes[i - 1].total
+				trade_tax.rate_applicable_percent = tax.rate
+				trade_tax.calculated_amount = tax.tax_amount
+
+				if self.invoice.taxes[i - 1].charge_type == "Actual":
+					# VAT for a LogisticsServiceCharge
+					trade_tax.type_code = "VAT"
+				else:
+					# A tax or duty applied on and in addition to existing duties and taxes.
+					trade_tax.type_code = "SUR"
+
+				trade_tax.category_code = duty_tax_fee_category_codes.get(
+					[
+						("Account", tax.account_head),
+						("Tax Category", self.invoice.tax_category),
+						("Sales Taxes and Charges Template", self.invoice.taxes_and_charges),
+					]
+				)
+				self.doc.trade.settlement.trade_tax.add(trade_tax)
+				tax_added = True
+
+		return tax_added
+
+	def _add_empty_tax(self):
+		"""Add a 0% tax to the document, since it is mandatory."""
 		trade_tax = ApplicableTradeTax()
 		trade_tax.type_code = "VAT"  # [CII-DT-037] - TypeCode shall be 'VAT'
 		trade_tax.category_code = duty_tax_fee_category_codes.get(
 			[
-				("Tax Category", invoice.tax_category),
-				("Sales Taxes and Charges Template", invoice.taxes_and_charges),
+				("Tax Category", self.invoice.tax_category),
+				("Sales Taxes and Charges Template", self.invoice.taxes_and_charges),
 			]
 		)
-		trade_tax.basis_amount = invoice.net_total
+		trade_tax.basis_amount = self.invoice.net_total
 		trade_tax.rate_applicable_percent = 0
 		trade_tax.calculated_amount = 0
 		trade_tax.exemption_reason_code = vat_exemption_reason_codes.get(
 			[
-				("Tax Category", invoice.tax_category),
-				("Sales Taxes and Charges Template", invoice.taxes_and_charges),
+				("Tax Category", self.invoice.tax_category),
+				("Sales Taxes and Charges Template", self.invoice.taxes_and_charges),
 			]
 		)
-		doc.trade.settlement.trade_tax.add(trade_tax)
+		self.doc.trade.settlement.trade_tax.add(trade_tax)
 
-	for ps in invoice.payment_schedule:
-		payment_terms = PaymentTerms()
-		payment_terms.description = ps.description
-		payment_terms.due = ps.due_date
+	def _add_payment_terms(self):
+		for ps in self.invoice.payment_schedule:
+			payment_terms = PaymentTerms()
+			payment_terms.description = ps.description
+			payment_terms.due = ps.due_date
 
-		if len(invoice.payment_schedule) > 1:
-			payment_terms.partial_amount.add(
-				(ps.payment_amount, None)
-			)  # [CII-DT-031] - currencyID should not be present
+			if len(self.invoice.payment_schedule) > 1:
+				payment_terms.partial_amount.add(
+					(ps.payment_amount, None)
+				)  # [CII-DT-031] - currencyID should not be present
 
-		if ps.discount and ps.discount_date:
-			payment_terms.discount_terms.basis_date_time = ps.discount_date
-			payment_terms.discount_terms.basis_amount = ps.payment_amount
-			if ps.discount_type == "Percentage":
-				payment_terms.discount_terms.calculation_percent = ps.discount
-			elif ps.discount_type == "Amount":
-				payment_terms.discount_terms.actual_amount = ps.discount
+			if ps.discount and ps.discount_date:
+				payment_terms.discount_terms.basis_date_time = ps.discount_date
+				payment_terms.discount_terms.basis_amount = ps.payment_amount
+				if ps.discount_type == "Percentage":
+					payment_terms.discount_terms.calculation_percent = ps.discount
+				elif ps.discount_type == "Amount":
+					payment_terms.discount_terms.actual_amount = ps.discount
 
-		doc.trade.settlement.terms.add(payment_terms)
+			self.doc.trade.settlement.terms.add(payment_terms)
 
-	actual_charge_total = sum(tax.tax_amount for tax in invoice.taxes if tax.charge_type == "Actual")
-	tax_total = sum(tax.tax_amount for tax in invoice.taxes if tax.charge_type != "Actual")
-	doc.trade.settlement.monetary_summation.line_total = invoice.total
+	def _set_totals(self):
+		actual_charge_total = sum(tax.tax_amount for tax in self.invoice.taxes if tax.charge_type == "Actual")
+		tax_total = sum(tax.tax_amount for tax in self.invoice.taxes if tax.charge_type != "Actual")
+		self.doc.trade.settlement.monetary_summation.line_total = self.invoice.total
 
-	if actual_charge_total:
-		doc.trade.settlement.monetary_summation.charge_total = actual_charge_total
+		if actual_charge_total:
+			self.doc.trade.settlement.monetary_summation.charge_total = actual_charge_total
 
-	if invoice.discount_amount:
-		doc.trade.settlement.monetary_summation.allowance_total = invoice.discount_amount
+		if self.invoice.discount_amount:
+			self.doc.trade.settlement.monetary_summation.allowance_total = self.invoice.discount_amount
 
-	doc.trade.settlement.monetary_summation.tax_basis_total = invoice.net_total + actual_charge_total
-	doc.trade.settlement.monetary_summation.tax_total = tax_total
-	doc.trade.settlement.monetary_summation.tax_total_other_currency.add((tax_total, invoice.currency))
-	doc.trade.settlement.monetary_summation.grand_total = invoice.grand_total
-	doc.trade.settlement.monetary_summation.prepaid_total = invoice.total_advance
-	doc.trade.settlement.monetary_summation.due_amount = invoice.outstanding_amount
-
-	invoice.run_method("after_einvoice_generation", doc)
-
-	return doc.serialize(schema="FACTUR-X_EXTENDED")
+		self.doc.trade.settlement.monetary_summation.tax_basis_total = (
+			self.invoice.net_total + actual_charge_total
+		)
+		self.doc.trade.settlement.monetary_summation.tax_total = tax_total
+		self.doc.trade.settlement.monetary_summation.tax_total_other_currency.add(
+			(tax_total, self.invoice.currency)
+		)
+		self.doc.trade.settlement.monetary_summation.grand_total = self.invoice.grand_total
+		self.doc.trade.settlement.monetary_summation.prepaid_total = self.invoice.total_advance
+		self.doc.trade.settlement.monetary_summation.due_amount = self.invoice.outstanding_amount
 
 
 def validate_vat_id(vat_id: str) -> tuple[str, str]:
