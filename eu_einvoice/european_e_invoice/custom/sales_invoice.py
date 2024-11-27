@@ -415,13 +415,16 @@ class EInvoiceGenerator:
 					(ps.payment_amount, None)
 				)  # [CII-DT-031] - currencyID should not be present
 
-			if ps.discount and ps.discount_date:
-				payment_terms.discount_terms.basis_date_time = ps.discount_date
-				payment_terms.discount_terms.basis_amount = ps.payment_amount
-				if ps.discount_type == "Percentage":
-					payment_terms.discount_terms.calculation_percent = ps.discount
-				elif ps.discount_type == "Amount":
-					payment_terms.discount_terms.actual_amount = ps.discount
+			# # This seems useful, but the schematron complains:
+			# # [CII-SR-408] - ApplicableTradePaymentDiscountTerms should not be present
+			#
+			# if ps.discount and ps.discount_date:
+			# 	payment_terms.discount_terms.basis_date_time = ps.discount_date
+			# 	payment_terms.discount_terms.basis_amount = ps.payment_amount
+			# 	if ps.discount_type == "Percentage":
+			# 		payment_terms.discount_terms.calculation_percent = ps.discount
+			# 	elif ps.discount_type == "Amount":
+			# 		payment_terms.discount_terms.actual_amount = ps.discount
 
 			self.doc.trade.settlement.terms.add(payment_terms)
 
