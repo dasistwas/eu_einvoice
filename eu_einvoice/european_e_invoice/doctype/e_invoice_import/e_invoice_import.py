@@ -278,7 +278,7 @@ def format_heading(heading: str) -> str:
 def get_xml_bytes(file: Path) -> bytes:
 	"""Reads the XML data from the given XML or PDF file path."""
 	if file.suffix == ".pdf":
-		xml_filename, xml_bytes = get_xml_from_pdf(file.read_bytes())
+		xml_filename, xml_bytes = get_xml_from_pdf(file.read_bytes(), check_xsd=False)
 		if not xml_bytes:
 			frappe.throw(_("No XML data found in PDF file."))
 	elif file.suffix == ".xml":
