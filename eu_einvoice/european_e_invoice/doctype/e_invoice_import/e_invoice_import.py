@@ -110,9 +110,7 @@ class EInvoiceImport(Document):
 		xml_bytes = self.get_xml_bytes()
 		doc = DrafthorseDocument.parse(xml_bytes)
 
-		self.validation_errors = ""
-		self.validate_schematron(xml_bytes, Stylesheet.EN16931, _("European Invoice"))
-		self.validate_schematron(xml_bytes, Stylesheet.XRECHNUNG, _("German Federal Administration Invoice"))
+		self._validate_schematron(xml_bytes)
 
 		self.id = str(doc.header.id)
 		self.issue_date = str(doc.header.issue_date_time)
@@ -140,14 +138,28 @@ class EInvoiceImport(Document):
 		for term in doc.trade.settlement.terms.children:
 			self.parse_payment_term(term)
 
-	def validate_schematron(self, xml_bytes, stylesheet: Stylesheet, heading: str):
-		validation_errors = get_validation_errors(xml_bytes.decode("utf-8"), stylesheet)
+	def _validate_schematron(self, xml_bytes):
+		self.validation_errors = ""
+		xml_string = xml_bytes.decode("utf-8")
 
-		if not any(validation_errors):
-			self.correct_european_invoice = 1
-		else:
+		en_validation_errors = get_validation_errors(xml_string, Stylesheet.EN16931)
+		xr_validation_errors = get_validation_errors(xml_string, Stylesheet.XRECHNUNG)
+
+		if any(en_validation_errors):
 			self.correct_european_invoice = 0
-			self.validation_errors += "\n" + format_heading(heading) + "\n".join(validation_errors)
+			self.validation_errors += format_heading(_("European Invoice")) + "\n".join(en_validation_errors)
+		else:
+			self.correct_european_invoice = 1
+
+		if any(xr_validation_errors):
+			self.correct_german_federal_administration_invoice = 0
+			if self.validation_errors:
+				self.validation_errors += "\n"
+			self.validation_errors += format_heading(_("German Federal Administration Invoice")) + "\n".join(
+				xr_validation_errors
+			)
+		else:
+			self.correct_german_federal_administration_invoice = 1
 
 	def parse_seller(self, seller: "TradeParty"):
 		self.seller_name = str(seller.name)
