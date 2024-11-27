@@ -430,10 +430,7 @@ def get_item_rate(item_tax_template: str | None, taxes: list[dict]) -> float | N
 
 	# if only one tax is on net total, return its rate
 	tax_rates = [invoice_tax.rate for invoice_tax in taxes if invoice_tax.charge_type == "On Net Total"]
-	if len(tax_rates) == 1:
-		return tax_rates[0]
-
-	return None
+	return tax_rates[0] if len(tax_rates) == 1 else None
 
 
 @frappe.whitelist(allow_guest=True)
