@@ -103,6 +103,23 @@ class EInvoiceImport(Document):
 	def on_submit(self):
 		self.add_seller_product_ids_to_items()
 
+	def onload(self):
+		if self.docstatus == 0:
+			return
+
+		invoices = frappe.get_list(
+			"Purchase Invoice",
+			filters={"bill_no": self.id, "supplier": self.supplier, "company": self.company},
+			fields=["name", "e_invoice_import"],
+		)
+		linked_invoice = next(
+			(invoice.name for invoice in invoices if invoice.e_invoice_import == self.name), None
+		)
+		unlinked_invoice = next((invoice.name for invoice in invoices if not invoice.e_invoice_import), None)
+
+		self.set_onload("linked_invoice", linked_invoice)
+		self.set_onload("unlinked_invoice", unlinked_invoice)
+
 	def get_xml_bytes(self) -> bytes:
 		return get_xml_bytes(Path(get_site_path(self.einvoice.lstrip("/"))).resolve())
 
@@ -460,3 +477,21 @@ def create_einvoice_from_po(source_name, target_doc=None):
 		},
 		target_doc,
 	)
+
+
+@frappe.whitelist()
+def link_to_purchase_invoice(einvoice: str, purchase_invoice: str):
+	"""Link an existing E Invoice Import to an existing Purchase Invoice."""
+	pi = frappe.get_doc("Purchase Invoice", purchase_invoice)
+	pi.check_permission("write")
+	if pi.e_invoice_import:
+		frappe.throw(
+			_("Purchase Invoice {0} is already linked to E Invoice Import {1}").format(
+				purchase_invoice, pi.e_invoice_import
+			)
+		)
+
+	if not frappe.db.get_list("E Invoice Import", filters={"name": einvoice}, limit=1):
+		frappe.throw(_("E Invoice Import {0} does not exist").format(einvoice))
+
+	pi.db_set("e_invoice_import", einvoice)

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: European e-Invoice VERSION\n"
 "Report-Msgid-Bugs-To: hallo@alyf.de\n"
-"POT-Creation-Date: 2024-11-25 18:57+0053\n"
-"PO-Revision-Date: 2024-11-25 18:57+0053\n"
+"POT-Creation-Date: 2024-11-30 21:02+0053\n"
+"PO-Revision-Date: 2024-11-30 21:02+0053\n"
 "Last-Translator: hallo@alyf.de\n"
 "Language-Team: hallo@alyf.de\n"
 "MIME-Version: 1.0\n"
@@ -126,13 +126,16 @@ msgid "Correct German Federal Administration Invoice"
 msgstr ""
 
 #: eu_einvoice/european_e_invoice/custom/purchase_order.js:12
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.js:70
 msgid "Create"
 msgstr ""
 
 #. Label of the create_item (Button) field in DocType 'E Invoice Item'
 #: eu_einvoice/european_e_invoice/doctype/e_invoice_item/e_invoice_item.json
 msgid "Create Item"
+msgstr ""
+
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.js:82
+msgid "Create Purchase Invoice"
 msgstr ""
 
 #. Label of the create_supplier (Button) field in DocType 'E Invoice Import'
@@ -191,6 +194,10 @@ msgstr ""
 msgid "E Invoice Import"
 msgstr ""
 
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:495
+msgid "E Invoice Import {0} does not exist"
+msgstr ""
+
 #. Name of a DocType
 #: eu_einvoice/european_e_invoice/doctype/e_invoice_item/e_invoice_item.json
 msgid "E Invoice Item"
@@ -211,7 +218,7 @@ msgstr ""
 msgid "E-Invoice"
 msgstr ""
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:114
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:167
 msgid "European Invoice"
 msgstr ""
 
@@ -221,7 +228,7 @@ msgstr ""
 msgid "File Section"
 msgstr ""
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:115
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:175
 msgid "German Federal Administration Invoice"
 msgstr ""
 
@@ -252,12 +259,16 @@ msgstr ""
 msgid "Items"
 msgstr ""
 
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.js:68
+msgid "Link to {0}"
+msgstr ""
+
 #. Label of the net_rate (Currency) field in DocType 'E Invoice Item'
 #: eu_einvoice/european_e_invoice/doctype/e_invoice_item/e_invoice_item.json
 msgid "Net Rate"
 msgstr ""
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:283
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:312
 msgid "No XML data found in PDF file."
 msgstr ""
 
@@ -301,8 +312,8 @@ msgstr ""
 msgid "Product Name"
 msgstr ""
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.js:63
-msgid "Purchase Invoice"
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:489
+msgid "Purchase Invoice {0} is already linked to E Invoice Import {1}"
 msgstr ""
 
 #. Name of a role
@@ -427,7 +438,7 @@ msgstr ""
 msgid "Unit Code"
 msgstr ""
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:287
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:316
 msgid "Unsupported file format '{0}'"
 msgstr ""
 
@@ -436,9 +447,10 @@ msgstr ""
 msgid "Upload the <code>.xml</code> or <code>.pdf</code> file provided by your supplier."
 msgstr ""
 
-#. Label of the validation_tab (Tab Break) field in DocType 'E Invoice Import'
+#. Label of the validation_details_section (Section Break) field in DocType 'E
+#. Invoice Import'
 #: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.json
-msgid "Validation"
+msgid "Validation Details"
 msgstr ""
 
 #. Label of the validation_errors (Text) field in DocType 'E Invoice Import'
@@ -446,7 +458,11 @@ msgstr ""
 msgid "Validation Errors"
 msgstr ""
 
-#: eu_einvoice/european_e_invoice/custom/sales_invoice.py:362
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.js:64
+msgid "View {0}"
+msgstr ""
+
+#: eu_einvoice/european_e_invoice/custom/sales_invoice.py:476
 msgid "{0} row #{1}: Type '{2}' is not supported in e-invoice"
 msgstr ""
 

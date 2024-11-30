@@ -59,16 +59,33 @@ frappe.ui.form.on("E Invoice Import", {
 		};
 
 		if (frm.doc.docstatus === 1) {
-			frm.add_custom_button(
-				__("Purchase Invoice"),
-				function () {
+			const { linked_invoice, unlinked_invoice } = frm.doc.__onload;
+			if (linked_invoice && frappe.model.can_read("Purchase Invoice")) {
+				frm.add_custom_button(__("View {0}", [linked_invoice]), function () {
+					frappe.set_route("Form", "Purchase Invoice", linked_invoice);
+				});
+			} else if (unlinked_invoice && frappe.model.can_write("Purchase Invoice")) {
+				frm.add_custom_button(__("Link to {0}", [unlinked_invoice]), function () {
+					frappe
+						.xcall(
+							"eu_einvoice.european_e_invoice.doctype.e_invoice_import.e_invoice_import.link_to_purchase_invoice",
+							{
+								einvoice: frm.doc.name,
+								purchase_invoice: unlinked_invoice,
+							}
+						)
+						.then(() => {
+							frm.reload_doc();
+						});
+				});
+			} else if (frappe.model.can_create("Purchase Invoice")) {
+				frm.add_custom_button(__("Create Purchase Invoice"), function () {
 					frappe.model.open_mapped_doc({
 						method: "eu_einvoice.european_e_invoice.doctype.e_invoice_import.e_invoice_import.create_purchase_invoice",
 						frm: frm,
 					});
-				},
-				__("Create")
-			);
+				});
+			}
 		}
 	},
 	create_supplier: function (frm) {
