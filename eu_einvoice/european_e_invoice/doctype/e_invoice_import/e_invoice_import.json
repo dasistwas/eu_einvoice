@@ -8,8 +8,11 @@
   "document_tab",
   "file_section_section",
   "einvoice",
+  "column_break_twhg",
   "correct_european_invoice",
   "correct_german_federal_administration_invoice",
+  "validation_details_section",
+  "validation_errors",
   "header_section",
   "issue_date",
   "id",
@@ -48,9 +51,7 @@
   "currency",
   "taxes",
   "due_date",
-  "payment_terms",
-  "validation_tab",
-  "validation_errors"
+  "payment_terms"
  ],
  "fields": [
   {
@@ -308,11 +309,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "validation_tab",
-   "fieldtype": "Tab Break",
-   "label": "Validation"
-  },
-  {
    "default": "0",
    "fieldname": "correct_european_invoice",
    "fieldtype": "Check",
@@ -325,6 +321,16 @@
    "fieldtype": "Check",
    "label": "Correct German Federal Administration Invoice",
    "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "validation_details_section",
+   "fieldtype": "Section Break",
+   "label": "Validation Details"
+  },
+  {
+   "fieldname": "column_break_twhg",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -335,7 +341,7 @@
    "link_fieldname": "e_invoice_import"
   }
  ],
- "modified": "2024-11-25 08:11:13.175003",
+ "modified": "2024-11-30 14:01:41.170525",
  "modified_by": "Administrator",
  "module": "European e-Invoice",
  "name": "E Invoice Import",
