@@ -501,13 +501,29 @@ def get_item_rate(item_tax_template: str | None, taxes: list[dict]) -> float | N
 def download_pdf(
 	doctype: str, name: str, format=None, doc=None, no_letterhead=0, language=None, letterhead=None
 ):
-	from drafthorse.pdf import attach_xml
 	from frappe.utils.print_format import download_pdf as frappe_download_pdf
 
+	# Regular Frappe PDF download
+	# Sets frappe.local.response.filecontent to the PDF data
 	frappe_download_pdf(doctype, name, format, doc, no_letterhead, language, letterhead)
 
+	# If the doctype is a Sales Invoice, attach the XML to the PDF
 	if doctype == "Sales Invoice":
-		xml_bytes = get_einvoice(name)
-		frappe.local.response.filecontent = attach_xml(
-			frappe.local.response.filecontent, xml_bytes, level="XRECHNUNG"
-		)
+		frappe.local.response.filecontent = attach_xml_to_pdf(name, frappe.local.response.filecontent)
+
+
+def attach_xml_to_pdf(invoice_id: str, pdf_data: bytes, level: str | None = None) -> bytes:
+	"""Return the PDF data with the invoice attached as XML.
+
+	Params:
+	        invoice_id: The name of the Sales Invoice.
+	        pdf_data: The PDF data as bytes.
+	        level: Factur-X profile level. One of 'MINIMUM', 'BASIC WL', 'BASIC', 'EN 16931', 'EXTENDED', 'XRECHNUNG'. Defaults to "XRECHNUNG".
+	"""
+	from drafthorse.pdf import attach_xml
+
+	if level is None:
+		level = "XRECHNUNG"
+
+	xml_bytes = get_einvoice(invoice_id)
+	return attach_xml(pdf_data, xml_bytes, level)
