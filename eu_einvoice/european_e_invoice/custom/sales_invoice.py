@@ -3,14 +3,14 @@ from typing import TYPE_CHECKING, Optional
 
 import frappe
 from drafthorse.models.accounting import ApplicableTradeTax
-from drafthorse.models.document import Document
+from drafthorse.models.document import Document, IncludedNote
 from drafthorse.models.party import TaxRegistration, URIUniversalCommunication
 from drafthorse.models.payment import PaymentTerms
 from drafthorse.models.trade import LogisticsServiceCharge
 from drafthorse.models.tradelines import LineItem
 from frappe import _
 from frappe.core.utils import html2text
-from frappe.utils.data import flt
+from frappe.utils.data import flt, to_markdown
 
 from eu_einvoice.common_codes import CommonCodeRetriever
 
@@ -166,6 +166,11 @@ class EInvoiceGenerator:
 			self.doc.header.type_code = "380"
 
 		self.doc.header.issue_date_time = self.invoice.posting_date
+
+		if self.invoice.terms:
+			note = IncludedNote(subject_code="ABC")  # Conditions of sale or purchase
+			note.content.add(to_markdown(self.invoice.terms).strip())
+			self.doc.header.notes.add(note)
 
 	def _set_seller(self):
 		self.doc.trade.agreement.seller.name = self.invoice.company
