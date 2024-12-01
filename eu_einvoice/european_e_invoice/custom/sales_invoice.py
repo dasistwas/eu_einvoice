@@ -124,6 +124,13 @@ class EInvoiceGenerator:
 			[("Payment Terms Template", self.invoice.payment_terms_template)]
 			+ [("Mode of Payment", term.mode_of_payment) for term in self.invoice.payment_schedule]
 		)
+
+		if self.invoice.from_date:
+			self.doc.trade.settlement.period.start = self.invoice.from_date
+
+		if self.invoice.to_date:
+			self.doc.trade.settlement.period.end = self.invoice.to_date
+
 		self._add_payment_terms()
 		self._set_totals()
 
