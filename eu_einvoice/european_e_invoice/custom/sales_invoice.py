@@ -461,7 +461,13 @@ class EInvoiceGenerator:
 			(tax_total, self.invoice.currency)
 		)
 		self.doc.trade.settlement.monetary_summation.grand_total = self.invoice.grand_total
-		self.doc.trade.settlement.monetary_summation.prepaid_total = self.invoice.total_advance
+
+		if self.invoice.is_return and not self.invoice.update_outstanding_for_self:
+			# We paid the grand total by reducing the original invoice
+			self.doc.trade.settlement.monetary_summation.prepaid_total = self.invoice.grand_total
+		else:
+			self.doc.trade.settlement.monetary_summation.prepaid_total = self.invoice.total_advance
+
 		self.doc.trade.settlement.monetary_summation.due_amount = self.invoice.outstanding_amount
 
 
