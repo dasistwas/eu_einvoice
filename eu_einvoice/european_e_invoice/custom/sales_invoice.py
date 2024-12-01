@@ -172,6 +172,11 @@ class EInvoiceGenerator:
 			note.content.add(to_markdown(self.invoice.terms).strip())
 			self.doc.header.notes.add(note)
 
+		if self.invoice.incoterm:
+			note = IncludedNote(subject_code="AAR")  # Terms of delivery
+			note.content.add(f"{self.invoice.incoterm} {self.invoice.named_place or ''}".strip())
+			self.doc.header.notes.add(note)
+
 	def _set_seller(self):
 		self.doc.trade.agreement.seller.name = self.invoice.company
 		if self.invoice.company_tax_id:
