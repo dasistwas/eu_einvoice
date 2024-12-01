@@ -64,6 +64,8 @@ The following fields of the **Sales Invoice** are currently considered for the e
 - Invoice number
 - Invoice date
 - Due date
+- From date
+- To date
 - Language
 - Currency
 - Company
@@ -110,6 +112,8 @@ The following fields of the **Sales Invoice** are currently considered for the e
     - Rate
     - Net Amount
     - Amount
+- Terms and Conditions Details (converted to markdown)
+- Incoterm and named place
 - Payment terms:
     - Description
     - Due date
