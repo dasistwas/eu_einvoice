@@ -239,8 +239,19 @@ class EInvoiceImport(Document):
 
 		t = self.append("payment_terms")
 		t.due = term.due._value
-		partial_amount = [row[0] for row in term.partial_amount.children if row[1] == self.currency][0]
-		t.partial_amount = float(partial_amount)
+		partial_amount = None
+		for row in term.partial_amount.children:
+			if isinstance(row, tuple):
+				# row = (amount, currency)
+				if row[1] == self.currency:
+					partial_amount = row[0]
+					break
+			else:
+				# row = amount
+				partial_amount = row
+				break
+
+		t.partial_amount = float(partial_amount) if partial_amount is not None else None
 		t.description = term.description
 		t.discount_basis_date = term.discount_terms.basis_date_time._value
 
