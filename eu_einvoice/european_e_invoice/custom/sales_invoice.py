@@ -455,6 +455,9 @@ class EInvoiceGenerator:
 				# 	payment_terms.discount_terms.calculation_percent = ps.discount
 				# elif ps.discount_type == "Amount":
 				# 	payment_terms.discount_terms.actual_amount = ps.discount
+				ps_description = ps_description.replace(
+					"#", "//"
+				)  # the character "#" is not allowed in the free text
 				if ps.discount_type == "Percentage":
 					discount_days = date_diff(ps.discount_date, self.invoice.posting_date)
 					basis_amount = (
