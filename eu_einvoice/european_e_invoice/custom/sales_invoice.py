@@ -142,11 +142,23 @@ class EInvoiceGenerator:
 			# -- Credit note --
 			# Document/message for providing credit information to the relevant party.
 			self.doc.header.type_code = "381"
+			self.doc.trade.settlement.invoice_referenced_document.issuer_assigned_id = (
+				self.invoice.return_against
+			)
+			self.doc.trade.settlement.invoice_referenced_document.issue_date_time = frappe.db.get_value(
+				"Sales Invoice", self.invoice.return_against, "posting_date"
+			)
 		elif self.invoice.amended_from:
 			# -- Corrected invoice --
 			# Commercial invoice that includes revised information differing from an
 			# earlier submission of the same invoice.
 			self.doc.header.type_code = "384"
+			self.doc.trade.settlement.invoice_referenced_document.issuer_assigned_id = (
+				self.invoice.amended_from
+			)
+			self.doc.trade.settlement.invoice_referenced_document.issue_date_time = frappe.db.get_value(
+				"Sales Invoice", self.invoice.amended_from, "posting_date"
+			)
 		else:
 			# -- Commercial invoice --
 			# Document/message claiming payment for goods or services supplied under
