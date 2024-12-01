@@ -10,7 +10,7 @@ from drafthorse.models.trade import LogisticsServiceCharge
 from drafthorse.models.tradelines import LineItem
 from frappe import _
 from frappe.core.utils import html2text
-from frappe.utils.data import flt, to_markdown
+from frappe.utils.data import date_diff, flt, to_markdown
 
 from eu_einvoice.common_codes import CommonCodeRetriever
 
@@ -438,7 +438,7 @@ class EInvoiceGenerator:
 	def _add_payment_terms(self):
 		for ps in self.invoice.payment_schedule:
 			payment_terms = PaymentTerms()
-			payment_terms.description = ps.description
+			ps_description = ps.description or ""
 			payment_terms.due = ps.due_date
 
 			if len(self.invoice.payment_schedule) > 1:
@@ -446,16 +446,29 @@ class EInvoiceGenerator:
 					(ps.payment_amount, None)
 				)  # [CII-DT-031] - currencyID should not be present
 
-			# # This seems useful, but the schematron complains:
-			# # [CII-SR-408] - ApplicableTradePaymentDiscountTerms should not be present
-			#
-			# if ps.discount and ps.discount_date:
-			# 	payment_terms.discount_terms.basis_date_time = ps.discount_date
-			# 	payment_terms.discount_terms.basis_amount = ps.payment_amount
-			# 	if ps.discount_type == "Percentage":
-			# 		payment_terms.discount_terms.calculation_percent = ps.discount
-			# 	elif ps.discount_type == "Amount":
-			# 		payment_terms.discount_terms.actual_amount = ps.discount
+			if ps.discount and ps.discount_date:
+				# # The following structured information supported by drafthorse seems useful, but the schematron complains:
+				# # [CII-SR-408] - ApplicableTradePaymentDiscountTerms should not be present
+				# payment_terms.discount_terms.basis_date_time = ps.discount_date
+				# payment_terms.discount_terms.basis_amount = ps.payment_amount
+				# if ps.discount_type == "Percentage":
+				# 	payment_terms.discount_terms.calculation_percent = ps.discount
+				# elif ps.discount_type == "Amount":
+				# 	payment_terms.discount_terms.actual_amount = ps.discount
+				if ps.discount_type == "Percentage":
+					discount_days = date_diff(ps.discount_date, self.invoice.posting_date)
+					basis_amount = (
+						ps.payment_amount
+						if round(ps.payment_amount, 2) != round(self.invoice.outstanding_amount, 2)
+						else None
+					)
+					if ps_description:
+						ps_description += "\n"
+					ps_description += get_skonto_line(discount_days, ps.discount, basis_amount)
+					ps_description += "\n"
+
+			if ps_description:
+				payment_terms.description = ps_description
 
 			self.doc.trade.settlement.terms.add(payment_terms)
 
@@ -532,6 +545,24 @@ def get_item_rate(item_tax_template: str | None, taxes: list[dict]) -> float | N
 	# if only one tax is on net total, return its rate
 	tax_rates = [invoice_tax.rate for invoice_tax in taxes if invoice_tax.charge_type == "On Net Total"]
 	return tax_rates[0] if len(tax_rates) == 1 else None
+
+
+def get_skonto_line(days: int, percent: float, basis_amount: float | None = None):
+	"""Return a string containing codified early payment discount terms.
+
+	According to the document [Angabe von Skonto bei der Nutzung des Übertragungskanals
+	„Upload“ an den Rechnungseingangsplattformen des Bundes](https://www.e-rechnung-bund.de/wp-content/uploads/2023/04/Angabe-Skonto-Upload.pdf)
+	"""
+	parts = [
+		"SKONTO",
+		f"TAGE={days}",
+		f"PROZENT={percent:.2f}",
+	]
+
+	if basis_amount:
+		parts.append(f"BASISBETRAG={basis_amount:.2f}")
+
+	return "#" + "#".join(parts) + "#"
 
 
 @frappe.whitelist(allow_guest=True)

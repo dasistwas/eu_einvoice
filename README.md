@@ -114,13 +114,13 @@ The following fields of the **Sales Invoice** are currently considered for the e
     - Amount
 - Terms and Conditions Details (converted to markdown)
 - Incoterm and named place
-- Payment terms:
+- Payment Schedule
     - Description
     - Due date
     - Amount
-    - Early Payment Discount
-        - Percentage or Amount
-        - Due date
+    - Discount Type (must be "Percentage")
+    - Discount
+    - Discount Date
 - Sales Taxs and Charges
     - The _Charge Type_ "Actual" is used as logistics or service charges.
     - For _Charge Type_ "On Net Total", the taxable amount is calculated as `tax_amount / rate * 100`, if the rate is available in the tax row or in the corresponding Account [1].
