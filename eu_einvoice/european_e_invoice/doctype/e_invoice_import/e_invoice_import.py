@@ -159,8 +159,21 @@ class EInvoiceImport(Document):
 		self.validation_errors = ""
 		xml_string = xml_bytes.decode("utf-8")
 
-		en_validation_errors = get_validation_errors(xml_string, Stylesheet.EN16931)
-		xr_validation_errors = get_validation_errors(xml_string, Stylesheet.XRECHNUNG)
+		try:
+			en_validation_errors = get_validation_errors(xml_string, Stylesheet.EN16931)
+			xr_validation_errors = get_validation_errors(xml_string, Stylesheet.XRECHNUNG)
+		except Exception:
+			frappe.log_error(
+				title="E Invoice schematron validation",
+				reference_doctype=self.doctype,
+				reference_name=self.name,
+			)
+			frappe.msgprint(
+				_("Could not validate E Invoice schematron. See Error Log for details."),
+				alert=True,
+				indicator="orange",
+			)
+			return
 
 		if any(en_validation_errors):
 			self.correct_european_invoice = 0
