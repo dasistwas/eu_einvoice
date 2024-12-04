@@ -40,5 +40,33 @@ def get_custom_fields():
 				"fetch_from": "customer.buyer_reference",
 				"fetch_if_empty": 1,
 			},
+			{
+				"fieldname": "e_invoice_validation_section",
+				"label": _("E Invoice Validation"),
+				"insert_after": "remarks",
+				"fieldtype": "Section Break",
+				"collapsible": 1,
+			},
+			{
+				"fieldname": "correct_european_invoice",
+				"label": _("Correct European Invoice"),
+				"insert_after": "e_invoice_validation_section",
+				"fieldtype": "Check",
+				"read_only": 1,
+			},
+			{
+				"fieldname": "correct_german_federal_administration_invoice",
+				"label": _("Correct German Federal Administration Invoice"),
+				"insert_after": "correct_european_invoice",
+				"fieldtype": "Check",
+				"read_only": 1,
+			},
+			{
+				"fieldname": "validation_errors",
+				"label": _("Validation Errors"),
+				"insert_after": "correct_german_federal_administration_invoice",
+				"fieldtype": "Text",
+				"read_only": 1,
+			},
 		],
 	}
