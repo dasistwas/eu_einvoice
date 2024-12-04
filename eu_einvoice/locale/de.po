@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: European e-Invoice VERSION\n"
 "Report-Msgid-Bugs-To: hallo@alyf.de\n"
-"POT-Creation-Date: 2024-11-30 21:02+0053\n"
+"POT-Creation-Date: 2024-12-04 17:06+0053\n"
 "PO-Revision-Date: 2024-11-25 18:57+0053\n"
 "Last-Translator: hallo@alyf.de\n"
 "Language: de\n"
@@ -37,7 +37,7 @@ msgstr "Vereinbarung"
 msgid "Amended From"
 msgstr "Korrektur von"
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:84
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:85
 msgid "An E Invoice Import with the same Invoice ID and Supplier already exists."
 msgstr "Eine E-Rechnung mit der gleichen Rechnungs-ID und Lieferanten existiert bereits."
 
@@ -110,6 +110,14 @@ msgstr "Berechneter Betrag"
 msgid "Calculation Percent"
 msgstr "Berechnung Prozentsatz"
 
+#: eu_einvoice/european_e_invoice/custom/sales_invoice.py:554
+msgid "Cannot create E Invoice."
+msgstr "E-Rechnung konnte nicht erstellt werden."
+
+#: eu_einvoice/european_e_invoice/custom/sales_invoice.py:561
+msgid "Cannot validate E Invoice schematron."
+msgstr "E-Rechnung konnte nicht validiert werden."
+
 #. Label of the company (Link) field in DocType 'E Invoice Import'
 #: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.json
 msgid "Company"
@@ -117,15 +125,21 @@ msgstr "Unternehmen"
 
 #. Label of the correct_european_invoice (Check) field in DocType 'E Invoice
 #. Import'
+#: eu_einvoice/custom_fields.py:52
 #: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.json
 msgid "Correct European Invoice"
 msgstr "Korrekte Europäische E-Rechnung"
 
 #. Label of the correct_german_federal_administration_invoice (Check) field in
 #. DocType 'E Invoice Import'
+#: eu_einvoice/custom_fields.py:59
 #: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.json
 msgid "Correct German Federal Administration Invoice"
 msgstr "Korrekte XRechnung"
+
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:173
+msgid "Could not validate E Invoice schematron. See Error Log for details."
+msgstr "E-Rechnung konnte nicht validiert werden. Details im Fehlerlog."
 
 #: eu_einvoice/european_e_invoice/custom/purchase_order.js:12
 msgid "Create"
@@ -196,7 +210,7 @@ msgstr "Fälligkeitsdatum"
 msgid "E Invoice Import"
 msgstr "E-Rechnungs-Import"
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:495
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:519
 msgid "E Invoice Import {0} does not exist"
 msgstr "E-Rechnungs-Import {0} existiert nicht"
 
@@ -215,12 +229,17 @@ msgstr "E-Rechnungs-Zahlungsbedingung"
 msgid "E Invoice Trade Tax"
 msgstr "E-Rechnungs-Steuer"
 
+#: eu_einvoice/custom_fields.py:45
+msgid "E Invoice Validation"
+msgstr "E-Rechnungs-Validierung"
+
 #. Label of the einvoice (Attach) field in DocType 'E Invoice Import'
 #: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.json
 msgid "E-Invoice"
 msgstr "E-Rechnung"
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:167
+#: eu_einvoice/european_e_invoice/custom/sales_invoice.py:565
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:181
 msgid "European Invoice"
 msgstr "Europäische Rechnung"
 
@@ -230,7 +249,8 @@ msgstr "Europäische Rechnung"
 msgid "File Section"
 msgstr "Datei-Abschnitt"
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:175
+#: eu_einvoice/european_e_invoice/custom/sales_invoice.py:572
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:189
 msgid "German Federal Administration Invoice"
 msgstr "Deutsche Bundesverwaltung"
 
@@ -270,7 +290,7 @@ msgstr "Mit {0} verknüpfen"
 msgid "Net Rate"
 msgstr "Nettopreis"
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:312
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:336
 msgid "No XML data found in PDF file."
 msgstr "Keine XML-Daten in der PDF-Datei gefunden."
 
@@ -285,15 +305,15 @@ msgstr "Teilbetrag"
 msgid "Payment Terms"
 msgstr "Zahlungsbedingungen"
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:95
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:96
 msgid "Please create or select a supplier before submitting"
 msgstr "Bitte vor dem Buchen einen Lieferanten auswählen oder erstellen."
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:101
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:102
 msgid "Please map all invoice lines to an item before submitting"
 msgstr "Bitte vor dem Buchen alle Positionen einem Artikel zuordnen."
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:98
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:99
 msgid "Please select a company before submitting"
 msgstr "Bitte vor dem Buchen ein Unternehmen auswählen."
 
@@ -314,7 +334,7 @@ msgstr "Produktbeschreibung"
 msgid "Product Name"
 msgstr "Produktname"
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:489
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:513
 msgid "Purchase Invoice {0} is already linked to E Invoice Import {1}"
 msgstr "Eingangsrechnung {0} ist bereits mit E-Rechnungs-Import {1} verknüpft"
 
@@ -440,7 +460,7 @@ msgstr "Einheit"
 msgid "Unit Code"
 msgstr "Einheits-Code"
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:316
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:340
 msgid "Unsupported file format '{0}'"
 msgstr "Nicht unterstütztes Dateiformat '{0}'"
 
@@ -456,6 +476,7 @@ msgid "Validation Details"
 msgstr "Validierungsdetails"
 
 #. Label of the validation_errors (Text) field in DocType 'E Invoice Import'
+#: eu_einvoice/custom_fields.py:66
 #: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.json
 msgid "Validation Errors"
 msgstr "Validierungsfehler"
@@ -464,7 +485,7 @@ msgstr "Validierungsfehler"
 msgid "View {0}"
 msgstr "{0} ansehen"
 
-#: eu_einvoice/european_e_invoice/custom/sales_invoice.py:476
+#: eu_einvoice/european_e_invoice/custom/sales_invoice.py:536
 msgid "{0} row #{1}: Type '{2}' is not supported in e-invoice"
 msgstr "{0} Zeile #{1}: Typ '{2}' wird in der E-Rechnung nicht unterstützt"
 

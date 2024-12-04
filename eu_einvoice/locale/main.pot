@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: European e-Invoice VERSION\n"
 "Report-Msgid-Bugs-To: hallo@alyf.de\n"
-"POT-Creation-Date: 2024-11-30 21:02+0053\n"
-"PO-Revision-Date: 2024-11-30 21:02+0053\n"
+"POT-Creation-Date: 2024-12-04 17:06+0053\n"
+"PO-Revision-Date: 2024-12-04 17:06+0053\n"
 "Last-Translator: hallo@alyf.de\n"
 "Language-Team: hallo@alyf.de\n"
 "MIME-Version: 1.0\n"
@@ -35,7 +35,7 @@ msgstr ""
 msgid "Amended From"
 msgstr ""
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:84
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:85
 msgid "An E Invoice Import with the same Invoice ID and Supplier already exists."
 msgstr ""
 
@@ -108,6 +108,14 @@ msgstr ""
 msgid "Calculation Percent"
 msgstr ""
 
+#: eu_einvoice/european_e_invoice/custom/sales_invoice.py:554
+msgid "Cannot create E Invoice."
+msgstr ""
+
+#: eu_einvoice/european_e_invoice/custom/sales_invoice.py:561
+msgid "Cannot validate E Invoice schematron."
+msgstr ""
+
 #. Label of the company (Link) field in DocType 'E Invoice Import'
 #: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.json
 msgid "Company"
@@ -115,14 +123,20 @@ msgstr ""
 
 #. Label of the correct_european_invoice (Check) field in DocType 'E Invoice
 #. Import'
+#: eu_einvoice/custom_fields.py:52
 #: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.json
 msgid "Correct European Invoice"
 msgstr ""
 
 #. Label of the correct_german_federal_administration_invoice (Check) field in
 #. DocType 'E Invoice Import'
+#: eu_einvoice/custom_fields.py:59
 #: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.json
 msgid "Correct German Federal Administration Invoice"
+msgstr ""
+
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:173
+msgid "Could not validate E Invoice schematron. See Error Log for details."
 msgstr ""
 
 #: eu_einvoice/european_e_invoice/custom/purchase_order.js:12
@@ -194,7 +208,7 @@ msgstr ""
 msgid "E Invoice Import"
 msgstr ""
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:495
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:519
 msgid "E Invoice Import {0} does not exist"
 msgstr ""
 
@@ -213,12 +227,17 @@ msgstr ""
 msgid "E Invoice Trade Tax"
 msgstr ""
 
+#: eu_einvoice/custom_fields.py:45
+msgid "E Invoice Validation"
+msgstr ""
+
 #. Label of the einvoice (Attach) field in DocType 'E Invoice Import'
 #: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.json
 msgid "E-Invoice"
 msgstr ""
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:167
+#: eu_einvoice/european_e_invoice/custom/sales_invoice.py:565
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:181
 msgid "European Invoice"
 msgstr ""
 
@@ -228,7 +247,8 @@ msgstr ""
 msgid "File Section"
 msgstr ""
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:175
+#: eu_einvoice/european_e_invoice/custom/sales_invoice.py:572
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:189
 msgid "German Federal Administration Invoice"
 msgstr ""
 
@@ -268,7 +288,7 @@ msgstr ""
 msgid "Net Rate"
 msgstr ""
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:312
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:336
 msgid "No XML data found in PDF file."
 msgstr ""
 
@@ -283,15 +303,15 @@ msgstr ""
 msgid "Payment Terms"
 msgstr ""
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:95
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:96
 msgid "Please create or select a supplier before submitting"
 msgstr ""
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:101
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:102
 msgid "Please map all invoice lines to an item before submitting"
 msgstr ""
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:98
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:99
 msgid "Please select a company before submitting"
 msgstr ""
 
@@ -312,7 +332,7 @@ msgstr ""
 msgid "Product Name"
 msgstr ""
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:489
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:513
 msgid "Purchase Invoice {0} is already linked to E Invoice Import {1}"
 msgstr ""
 
@@ -438,7 +458,7 @@ msgstr ""
 msgid "Unit Code"
 msgstr ""
 
-#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:316
+#: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.py:340
 msgid "Unsupported file format '{0}'"
 msgstr ""
 
@@ -454,6 +474,7 @@ msgid "Validation Details"
 msgstr ""
 
 #. Label of the validation_errors (Text) field in DocType 'E Invoice Import'
+#: eu_einvoice/custom_fields.py:66
 #: eu_einvoice/european_e_invoice/doctype/e_invoice_import/e_invoice_import.json
 msgid "Validation Errors"
 msgstr ""
@@ -462,7 +483,7 @@ msgstr ""
 msgid "View {0}"
 msgstr ""
 
-#: eu_einvoice/european_e_invoice/custom/sales_invoice.py:476
+#: eu_einvoice/european_e_invoice/custom/sales_invoice.py:536
 msgid "{0} row #{1}: Type '{2}' is not supported in e-invoice"
 msgstr ""
 
