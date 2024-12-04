@@ -15,6 +15,8 @@ from frappe.core.utils import html2text
 from frappe.utils.data import date_diff, flt, getdate, to_markdown
 
 from eu_einvoice.common_codes import CommonCodeRetriever
+from eu_einvoice.schematron import Stylesheet, get_validation_errors
+from eu_einvoice.utils import format_heading
 
 if TYPE_CHECKING:
 	from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
@@ -38,8 +40,10 @@ def download_xrechnung(invoice_id: str):
 	frappe.local.response.type = "download"
 
 
-def get_einvoice(invoice_id: str) -> bytes:
-	invoice = frappe.get_doc("Sales Invoice", invoice_id)
+def get_einvoice(invoice: str | SalesInvoice) -> bytes:
+	if isinstance(invoice, str):
+		invoice = frappe.get_doc("Sales Invoice", invoice)
+
 	invoice.check_permission("read")
 	invoice.run_method("before_einvoice_generation")
 
@@ -535,6 +539,39 @@ def validate_doc(doc, event):
 				alert=True,
 				indicator="orange",
 			)
+
+	validate_einvoice(doc)
+
+
+def validate_einvoice(doc: SalesInvoice):
+	doc.correct_european_invoice = 0
+	doc.correct_german_federal_administration_invoice = 0
+	doc.validation_errors = ""
+
+	try:
+		xml_string = get_einvoice(doc).decode()
+	except Exception:
+		doc.validation_errors = _("Cannot create E Invoice.")
+		return
+
+	try:
+		en_validation_errors = get_validation_errors(xml_string, Stylesheet.EN16931)
+		xr_validation_errors = get_validation_errors(xml_string, Stylesheet.XRECHNUNG)
+	except Exception:
+		doc.validation_errors = _("Cannot validate E Invoice schematron.")
+		return
+
+	if any(en_validation_errors):
+		doc.validation_errors += format_heading(_("European Invoice")) + "\n".join(en_validation_errors)
+	else:
+		doc.correct_european_invoice = 1
+
+	if any(xr_validation_errors):
+		if doc.validation_errors:
+			doc.validation_errors += "\n"
+		doc.validation_errors += format_heading(_("German Federal Administration Invoice")) + "\n".join(xr_validation_errors)
+	else:
+		doc.correct_german_federal_administration_invoice = 1
 
 
 def get_item_rate(item_tax_template: str | None, taxes: list[dict]) -> float | None:
