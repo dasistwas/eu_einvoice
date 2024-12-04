@@ -15,6 +15,7 @@ from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
 
 from eu_einvoice.schematron import Stylesheet, get_validation_errors
+from eu_einvoice.utils import format_heading
 
 if TYPE_CHECKING:
 	from drafthorse.models.accounting import ApplicableTradeTax
@@ -325,10 +326,6 @@ class EInvoiceImport(Document):
 
 def flt_or_none(value) -> float | None:
 	return float(value) if value is not None else None
-
-
-def format_heading(heading: str) -> str:
-	return "-" * (len(heading) + 4) + "\n" + f"{heading}\n" + "-" * (len(heading) + 4) + "\n"
 
 
 def get_xml_bytes(file: Path) -> bytes:
