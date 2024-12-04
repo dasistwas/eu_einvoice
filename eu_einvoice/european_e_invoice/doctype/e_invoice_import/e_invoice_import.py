@@ -232,18 +232,17 @@ class EInvoiceImport(Document):
 			)
 		item.item = item_code or None
 
-		item.billed_quantity = float(li.delivery.billed_quantity._amount)
+		item.billed_quantity = flt_or_none(li.delivery.billed_quantity._amount)
 		item.unit_code = str(li.delivery.billed_quantity._unit_code)
 		item.net_rate = rate
-		if li.settlement.trade_tax.rate_applicable_percent._value:
-			item.tax_rate = float(li.settlement.trade_tax.rate_applicable_percent._value)
-		item.total_amount = float(li.settlement.monetary_summation.total_amount._value)
+		item.tax_rate = flt_or_none(li.settlement.trade_tax.rate_applicable_percent._value)
+		item.total_amount = flt_or_none(li.settlement.monetary_summation.total_amount._value)
 
 	def parse_tax(self, tax: "ApplicableTradeTax"):
 		t = self.append("taxes")
-		t.basis_amount = float(tax.basis_amount._value or 0) or None
-		t.rate_applicable_percent = float(tax.rate_applicable_percent._value)
-		t.calculated_amount = float(tax.calculated_amount._value)
+		t.basis_amount = flt_or_none(tax.basis_amount._value)
+		t.rate_applicable_percent = flt_or_none(tax.rate_applicable_percent._value)
+		t.calculated_amount = flt_or_none(tax.calculated_amount._value)
 
 	def parse_payment_term(self, term: "PaymentTerms"):
 		if not term.partial_amount.children:
@@ -322,6 +321,10 @@ class EInvoiceImport(Document):
 					reference_doctype=self.doctype,
 					reference_name=self.name,
 				)
+
+
+def flt_or_none(value) -> float | None:
+	return float(value) if value is not None else None
 
 
 def format_heading(heading: str) -> str:
