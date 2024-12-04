@@ -50,7 +50,7 @@ def get_einvoice(invoice_id: str) -> bytes:
 		buyer_address = frappe.get_doc("Address", invoice.customer_address)
 
 	seller_contact = None
-	if invoice.company_contact_person:
+	if invoice.get("company_contact_person"):
 		seller_contact = frappe.get_doc("Contact", invoice.company_contact_person)
 
 	buyer_contact = None
