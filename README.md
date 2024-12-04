@@ -51,7 +51,11 @@ If you work with government customers or similar large organizations, you might 
 
 ### Sales Invoice
 
-To create a new eInvoice, open a **Sales Invoice** and click on "..." > "Download eInvoice". This will generate an XML file that you can send to your customer.
+During validation of the **Sales Invoice**, the eInvoice is created and validated against the EN16931 and XRechnung schematron, so that you can see any potential problems before submitting the invoice.
+
+![eInvoice validation in Sales Invoice](img/e_invoice_validation.png)
+
+To download the XML file (XRechnung), open a **Sales Invoice** and click on "..." > "Download eInvoice".
 
 When you open the print preview of the **Sales Invoice** and click on "PDF", the generated PDF file will have the e-invoice XML embedded. 
 
@@ -178,13 +182,16 @@ if TYPE_CHECKING:
 
 def before_einvoice_generation(doc: "SalesInvoice", event: str):
     """Modify the Sales Invoice object before generating the eInvoice."""
-    doc.customer_name = "Special Customer Name, only for eInvoices"
+    doc.customer_name = "Special Customer Name"
 
 
 def after_einvoice_generation(doc: "SalesInvoice", event: str, einvoice: "Document"):
     """Modify the generated eInvoice after it was created."""
-    einvoice.trade.agreement.buyer.name = "Special Customer Name, only for eInvoices"
+    einvoice.trade.agreement.buyer.name = doc.customer_name
 ```
+
+> [!WARNING]
+> These methods are also triggered during the `validate` event of the **Sales Invoice**. In this case, if you change the Sales Invoice object, these changes will be saved to the database.
 
 ## Validation
 
