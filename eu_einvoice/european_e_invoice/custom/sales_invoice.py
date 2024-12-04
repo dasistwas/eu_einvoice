@@ -12,7 +12,7 @@ from drafthorse.models.trade import LogisticsServiceCharge
 from drafthorse.models.tradelines import LineItem
 from frappe import _
 from frappe.core.utils import html2text
-from frappe.utils.data import date_diff, flt, to_markdown
+from frappe.utils.data import date_diff, flt, getdate, to_markdown
 
 from eu_einvoice.common_codes import CommonCodeRetriever
 
@@ -112,7 +112,7 @@ class EInvoiceGenerator:
 			self.doc.trade.agreement.buyer_order.issuer_assigned_id = self.invoice.po_no
 
 		if self.invoice.po_date:
-			self.doc.trade.agreement.buyer_order.issue_date_time = self.invoice.po_date
+			self.doc.trade.agreement.buyer_order.issue_date_time = getdate(self.invoice.po_date)
 
 		for item in self.invoice.items:
 			self._add_line_item(item)
@@ -128,10 +128,10 @@ class EInvoiceGenerator:
 		)
 
 		if self.invoice.from_date:
-			self.doc.trade.settlement.period.start = self.invoice.from_date
+			self.doc.trade.settlement.period.start = getdate(self.invoice.from_date)
 
 		if self.invoice.to_date:
-			self.doc.trade.settlement.period.end = self.invoice.to_date
+			self.doc.trade.settlement.period.end = getdate(self.invoice.to_date)
 
 		self._add_payment_terms()
 		self._set_totals()
@@ -174,7 +174,7 @@ class EInvoiceGenerator:
 			# conditions agreed between seller and buyer.
 			self.doc.header.type_code = "380"
 
-		self.doc.header.issue_date_time = self.invoice.posting_date
+		self.doc.header.issue_date_time = getdate(self.invoice.posting_date)
 
 		if self.invoice.terms:
 			note = IncludedNote(subject_code="ABC")  # Conditions of sale or purchase
@@ -441,7 +441,8 @@ class EInvoiceGenerator:
 		for ps in self.invoice.payment_schedule:
 			payment_terms = PaymentTerms()
 			ps_description = ps.description or ""
-			payment_terms.due = ps.due_date
+			if ps.due_date:
+				payment_terms.due = getdate(ps.due_date)
 
 			if len(self.invoice.payment_schedule) > 1:
 				payment_terms.partial_amount.add(
