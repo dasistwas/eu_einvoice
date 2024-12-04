@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import re
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import frappe
 from drafthorse.models.accounting import ApplicableTradeTax
@@ -75,12 +77,12 @@ class EInvoiceGenerator:
 
 	def __init__(
 		self,
-		invoice: "SalesInvoice",
-		company: "Company",
-		seller_address: Optional["Address"] = None,
-		buyer_address: Optional["Address"] = None,
-		seller_contact: Optional["Contact"] = None,
-		buyer_contact: Optional["Contact"] = None,
+		invoice: SalesInvoice,
+		company: Company,
+		seller_address: Address | None = None,
+		buyer_address: Address | None = None,
+		seller_contact: Contact | None = None,
+		buyer_contact: Contact | None = None,
 	):
 		self.invoice = invoice
 		self.company = company
@@ -275,7 +277,7 @@ class EInvoiceGenerator:
 				)
 			)
 
-	def _add_line_item(self, item: "SalesInvoiceItem"):
+	def _add_line_item(self, item: SalesInvoiceItem):
 		li = LineItem()
 		li.document.line_id = str(item.idx)
 		li.product.name = item.item_name
