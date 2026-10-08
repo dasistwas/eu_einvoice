@@ -723,7 +723,6 @@ class EInvoiceGenerator:
 		if code:
 			trade_tax.exemption_reason_code = str(code).upper()
 
-
 	def _add_delivery_date(self):
 		if self.delivery_dates:
 			delivery_date = sorted(self.delivery_dates)[-1]
